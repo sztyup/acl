@@ -23,12 +23,8 @@ class AclServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/../../config/acl.php' => config_path('acl.php'),
+            __DIR__ . '/../config/acl.php' => config_path('acl.php'),
         ], 'config');
-
-        $this->publishes([
-            __DIR__ . '/../../migrations/' => base_path('/database/migrations'),
-        ], 'migrations');
 
         $this->registerBlade();
     }
@@ -41,7 +37,7 @@ class AclServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/acl.php',
+            __DIR__ . '/../config/acl.php',
             'acl'
         );
 
