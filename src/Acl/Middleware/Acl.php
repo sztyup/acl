@@ -5,12 +5,17 @@ namespace Sztyup\Acl\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Sztyup\Acl\Exception\NotAuthorizedException;
+use Sztyup\Acl\UsesAcl;
 
 class Acl
 {
     public function handle(Request $request, Closure $next)
     {
         $action = $request->route()->getAction();
+
+        $user = $request->user();
+        $this->checkUserImplementsInterface($user);
+
         $roles = $action['is'];
         $permissions = $action['can'];
 
@@ -18,13 +23,13 @@ class Acl
         $missingPermissions = [];
 
         foreach ($roles as $role) {
-            if (!$request->user()->hasRole($role)) {
+            if (!$user->hasRole($role)) {
                 $missingRoles[] = $role;
             }
         }
 
         foreach ($permissions as $permission) {
-            if (!$request->user()->hasPermission($permission)) {
+            if (!$user->hasPermission($permission)) {
                 $missingPermissions[] = $permission;
             }
         }
@@ -34,5 +39,14 @@ class Acl
         }
 
         return $next($request);
+    }
+
+    private function checkUserImplementsInterface($user)
+    {
+        $reflection = new \ReflectionClass($user);
+
+        if (!$reflection->implementsInterface(UsesAcl::class)) {
+            throw new \Exception('User doesnt implement Sztyup\Acl\Contracts\UsesAcl interface');
+        }
     }
 }
