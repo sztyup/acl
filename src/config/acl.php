@@ -11,7 +11,7 @@ return [
     */
     'permissions_class' => \Sztyup\Acl\PermissionsManager::class,
 
-    'permission_to_role_class' => \Sztyup\Acl\Contracts\PermissionToRole::class,
+    'permissions_to_role_class' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
 
     'role_to_user_class' => \Sztyup\Acl\Contracts\RoleToUser::class,
 

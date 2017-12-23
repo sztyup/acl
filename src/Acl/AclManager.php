@@ -7,7 +7,7 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\Contracts\HasAclContract;
 use Sztyup\Acl\Contracts\Permissions;
-use Sztyup\Acl\Contracts\PermissionToRole;
+use Sztyup\Acl\Contracts\PermissionsToRole;
 use Sztyup\Acl\Contracts\RoleToUser;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
 use Sztyup\Acl\Traits\TreeHelpers;
@@ -45,7 +45,7 @@ class AclManager
         $this->checkSubclassOf($class = config('acl.permissions'), Permissions::class);
         $permissions = $container->make($class);
 
-        $this->checkSubclassOf($class = config('acl.permission_to_role_class'), PermissionToRole::class);
+        $this->checkSubclassOf($class = config('acl.permissions_to_role_class'), PermissionsToRole::class);
         $permissionsToRole = $container->make($class);
 
         $this->checkSubclassOf($class = config('acl.role_to_user_class'), RoleToUser::class);
@@ -70,7 +70,7 @@ class AclManager
         $this->roles = $roleToUser->getRolesForUser($this->user);
     }
 
-    protected function parsePermissions(Permissions $permissions, PermissionToRole $permissionToRole)
+    protected function parsePermissions(Permissions $permissions, PermissionsToRole $permissionToRole)
     {
         $this->permissions = new Collection();
 
@@ -78,7 +78,7 @@ class AclManager
 
         foreach ($this->roles as $role) {
             $this->permissions->merge(
-                $this->getPermissionsFromTree($permissionTree, $permissionToRole->getPermissionForRole($role))
+                $this->getPermissionsFromTree($permissionTree, $permissionToRole->getPermissionsForRole($role))
             );
         }
 
