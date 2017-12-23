@@ -11,7 +11,7 @@ class Permission
     protected $title;
     protected $truth;
 
-    public function __construct($name, $title, Closure $truth)
+    public function __construct($name, $title, $truth)
     {
         $this->name = $name;
         $this->title = $title;
