@@ -6,13 +6,17 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\Contracts\HasAclContract;
+use Sztyup\Acl\Contracts\Permissions;
 use Sztyup\Acl\Contracts\PermissionToRole;
 use Sztyup\Acl\Contracts\RoleToUser;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
+use Sztyup\Acl\Traits\TreeHelpers;
 use Tree\Node\NodeInterface;
 
 class AclManager
 {
+    use TreeHelpers;
+
     /**
      * @var \Illuminate\Contracts\Auth\Authenticatable|HasAclContract
      */
@@ -28,11 +32,17 @@ class AclManager
      */
     protected $roles;
 
+    /**
+     * @var bool
+     */
+    protected $inherits;
+
     public function __construct(Guard $guard, Container $container)
     {
         $this->user = $guard->user();
+        $this->inherits = config('acl.inheritance');
 
-        $this->checkSubclassOf($class = config('acl.permissions_class'), Permissions::class);
+        $this->checkSubclassOf($class = config('acl.permissions'), Permissions::class);
         $permissions = $container->make($class);
 
         $this->checkSubclassOf($class = config('acl.permission_to_role_class'), PermissionToRole::class);
@@ -43,6 +53,8 @@ class AclManager
 
         $this->parseRoles($roleToUser);
         $this->parsePermissions($permissions, $permissionsToRole);
+
+        dd($this->roles, $this->permissions);
     }
 
     protected function checkSubclassOf($class, $interface)
@@ -62,40 +74,52 @@ class AclManager
     {
         $this->permissions = new Collection();
 
+        $permissionTree = $this->addPermissionsToTree(null, $permissions->getPermissions());
+
         foreach ($this->roles as $role) {
-            $perms = $permissionToRole->getPermissionForRole($role);
+            $this->permissions->merge(
+                $this->getPermissionsFromTree($permissionTree, $permissionToRole->getPermissionForRole($role))
+            );
         }
 
-        $this->permissions->merge($this->getPermissionsByUser($permissions));
-    }
+        $this->permissions->merge(
+            $this->getDynamicPermissions($permissionTree)
+        );
 
-    protected function getPermissionsByUser(Permissions $permissions)
-    {
-        $result = [];
-
-        $permissions->traverse(function (NodeInterface $permission) use ($result) {
-            if ($permission->getValue()->apply($this->user)) {
-                $result[] = $permission->getAncestorsAndSelf();
-            }
+        $this->permissions->mapWithKeys(function (Permission $permission) {
+            return [
+                $permission->getName() => $permission->getTitle()
+            ];
         });
-
-        return $result;
     }
 
-    public function getPermissionsForRole(RoleToUser $roleToUser)
+    /**
+     * Returns all permission node (and theyre accendants if inheritance is enabled) who are listed in the values array
+     * @param NodeInterface $tree The tree to traverse
+     * @param array $values The permissions who are needed
+     * @return array
+     */
+    protected function getPermissionsFromTree(NodeInterface $tree, array $values)
     {
-        $permissions = $roleToUser->getRolesForUser($this->user);
+        return $this->filterTree($tree, function (Permission $permission) use ($values) {
+            return in_array($permission->getName(), $values);
+        });
+    }
 
-        $result = [];
-        foreach ($permissions as $permission) {
-            $result[] = $permission;
-        }
-
-        return $result;
+    protected function getDynamicPermissions(NodeInterface $tree)
+    {
+        return $this->filterTree($tree, function (Permission $permission) {
+            return $permission->apply($this->user);
+        });
     }
 
     public function hasRole($role)
     {
         return $this->roles->has($role);
+    }
+
+    public function hasPermission($name)
+    {
+        return $this->permissions->has($name);
     }
 }
