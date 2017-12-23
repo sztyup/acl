@@ -52,20 +52,20 @@ class AclServiceProvider extends ServiceProvider
     protected function registerBlade()
     {
         // role
-        Blade::directive('role', function ($expression) {
+        \Blade::directive('role', function ($expression) {
             return "<?php if (Auth::check() && Auth::user()->hasRole({$expression})): ?>";
         });
 
-        Blade::directive('endrole', function () {
+        \Blade::directive('endrole', function () {
             return "<?php endif; ?>";
         });
 
         // permission
-        Blade::directive('permission', function ($expression) {
+        \Blade::directive('permission', function ($expression) {
             return "<?php if (Auth::check() && Auth::user()->can({$expression})): ?>";
         });
 
-        Blade::directive('endpermission', function () {
+        \Blade::directive('endpermission', function () {
             return "<?php endif; ?>";
         });
     }
