@@ -33,5 +33,12 @@
     "psr-4": {
       "Sztyup\\Acl\\Tests\\": "tests/"
     }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Sztyup\\Acl\\AclServiceProvider"
+      ]
+    }
   }
 }
