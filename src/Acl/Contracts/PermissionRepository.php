@@ -2,7 +2,7 @@
 
 namespace Sztyup\Acl\Contracts;
 
-interface Permissions
+interface PermissionRepository
 {
     public function getPermissions(): array;
 }
