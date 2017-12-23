@@ -9,7 +9,7 @@ interface RoleToUser
 {
     /**
      * @param Authenticatable $user
-     * @return Role[]
+     * @return Role[] An array of Role objects
      */
     public function getRolesForUser(Authenticatable $user): array;
 }
