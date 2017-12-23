@@ -9,7 +9,7 @@ return [
     | Here you should list all the permission used by your application
     |
     */
-    'permissions_class' => \Sztyup\Acl\PermissionsManager::class,
+    'permissions_class' => \Sztyup\Acl\Contracts\Permissions::class,
 
     'permissions_to_role_class' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
 
