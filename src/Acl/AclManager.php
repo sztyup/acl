@@ -11,6 +11,7 @@ use Sztyup\Acl\Contracts\PermissionsToRole;
 use Sztyup\Acl\Contracts\RoleToUser;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
 use Sztyup\Acl\Traits\TreeHelpers;
+use Tree\Builder\NodeBuilder;
 use Tree\Node\NodeInterface;
 
 class AclManager
@@ -42,7 +43,7 @@ class AclManager
         $this->user = $guard->user();
         $this->inherits = config('acl.inheritance');
 
-        $this->checkSubclassOf($class = config('acl.permissions'), Permissions::class);
+        $this->checkSubclassOf($class = config('acl.permissions_class'), Permissions::class);
         $permissions = $container->make($class);
 
         $this->checkSubclassOf($class = config('acl.permissions_to_role_class'), PermissionsToRole::class);
@@ -74,7 +75,10 @@ class AclManager
     {
         $this->permissions = new Collection();
 
-        $permissionTree = $this->addPermissionsToTree(null, $permissions->getPermissions());
+        $permissionTree = $this->addPermissionsToTree(
+            new NodeBuilder(),
+            $permissions->getPermissions()
+        );
 
         foreach ($this->roles as $role) {
             $this->permissions->merge(

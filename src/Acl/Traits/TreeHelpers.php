@@ -37,10 +37,6 @@ trait TreeHelpers
      */
     protected function addPermissionsToTree(NodeBuilderInterface $tree, array $permissions)
     {
-        if ($tree == null) {
-            $tree = new NodeBuilder();
-        }
-
         foreach ($permissions as $child => $properties) {
             list($title, $truth, $children) = $this->parsePermission($properties);
 
