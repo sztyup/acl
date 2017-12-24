@@ -20,8 +20,8 @@ return [
     | Here you should list all the permission used by your application
     |
     */
-    'permissions_to_role_class' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
-    'role_to_user_class' => \Sztyup\Acl\Contracts\RoleToUser::class,
+    'permission_to_role' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
+    'role_to_user' => \Sztyup\Acl\Contracts\RoleToUser::class,
 
     /*
     |--------------------------------------------------------------------------
