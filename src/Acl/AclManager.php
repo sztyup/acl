@@ -10,10 +10,12 @@ use Sztyup\Acl\Contracts\PermissionRepository;
 use Sztyup\Acl\Contracts\PermissionsToRole;
 use Sztyup\Acl\Contracts\RoleRepository;
 use Sztyup\Acl\Contracts\RoleToUser;
+use Sztyup\Acl\Contracts\UsesAcl;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
 
 class AclManager
 {
+
     const CACHE_KEY_MAP = '__permission_to_role_mapping';
 
     /**
@@ -104,7 +106,7 @@ class AclManager
         } else {
             $this->map = $this->roleTree->mapWithKeys(function (Node $role) use ($permissionsToRole) {
                 if (!$role instanceof Role) {
-                    return;
+                    return [];
                 }
                 return [
                     $role->getName() => $permissionsToRole->getPermissionsForRole($role)
@@ -119,12 +121,12 @@ class AclManager
         $permissions = new Collection();
 
         foreach ($user->getRoles() as $role) {
-            $permissions->merge(
-                $this->getNodesFromTree($this->permissionTree, $this->map[$role->getName()])
+            $permissions = $permissions->merge(
+                $this->getNodesFromTree($this->permissionTree, $this->map[$role])
             );
         }
 
-        $permissions->merge(
+        $permissions = $permissions->merge(
             $this->getDynamicNodes($this->permissionTree, $user)
         );
 
@@ -137,9 +139,9 @@ class AclManager
     {
         $roles = new Collection();
 
-        $roles->merge($this->roleToUser->getRolesForUser($user));
+        $roles = $roles->merge($this->roleToUser->getRolesForUser($user));
 
-        $roles->merge($this->getDynamicNodes($this->roleTree, $user));
+        $roles = $roles->merge($this->getDynamicNodes($this->roleTree, $user));
 
         return $roles->map(function (Role $role) {
             return $role->getName();
