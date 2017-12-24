@@ -2,23 +2,21 @@
 
 namespace Sztyup\Acl;
 
-class Role
+class Role extends Node
 {
-    protected $id;
-    protected $name;
     protected $title;
-    protected $truth;
+    protected $description;
 
-    public function __construct(int $id, string $name, $title)
+    public function __construct(string $name, $title, $description, $truth)
     {
-        $this->id = $id;
-        $this->name = $name;
         $this->title = $title;
-    }
+        $this->description = $description;
 
-    public function getId(): int
-    {
-        return $this->id;
+        if (config('acl.dynamic_roles') && !is_callable($truth)) {
+            throw new \InvalidArgumentException('truth parameter is not callable, but it should be');
+        }
+
+        parent::__construct($name, $truth);
     }
 
     public function getTitle(): string
@@ -26,8 +24,9 @@ class Role
         return $this->title ?? '';
     }
 
-    public function getName(): string
+    public function getDescription(): string
     {
-        return $this->name;
+        return $this->description ?? '';
     }
+
 }
