@@ -2,12 +2,10 @@
 
 namespace Sztyup\Acl\Contracts;
 
-use Sztyup\Acl\Role;
-
 interface UsesAcl
 {
     /**
-     * @return array|Role[]
+     * @return array
      */
     public function getRoles(): array;
     public function hasRole($role, bool $all = false): bool;
