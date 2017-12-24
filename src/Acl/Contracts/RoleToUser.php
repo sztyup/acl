@@ -3,13 +3,13 @@
 namespace Sztyup\Acl\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Sztyup\Acl\Role;
+use Sztyup\Acl\UsesAcl;
 
 interface RoleToUser
 {
     /**
-     * @param Authenticatable $user
-     * @return Role[] An array of Role objects
+     * @param Authenticatable|UsesAcl $user
+     * @return array An array of Role objects
      */
-    public function getRolesForUser(Authenticatable $user): array;
+    public function getRolesForUser(UsesAcl $user): array;
 }
