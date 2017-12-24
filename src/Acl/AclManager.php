@@ -85,7 +85,7 @@ class AclManager
             null,
             $roleRepository->getRoles(),
             $roleRepository
-        );
+        )->getNode();
     }
 
     protected function parsePermissions(PermissionRepository $permissionRepository)
@@ -94,7 +94,7 @@ class AclManager
             null,
             $permissionRepository->getPermissions(),
             $permissionRepository
-        );
+        )->getNode();
     }
 
     protected function buildMap(PermissionsToRole $permissionsToRole)
@@ -102,7 +102,10 @@ class AclManager
         if ($this->cache->has(self::CACHE_KEY_MAP)) {
             $this->map = $this->cache->get(self::CACHE_KEY_MAP);
         } else {
-            $this->map = $this->roleTree->mapWithKeys(function (Role $role) use ($permissionsToRole) {
+            $this->map = $this->roleTree->mapWithKeys(function (Node $role) use ($permissionsToRole) {
+                if (!$role instanceof Role) {
+                    return;
+                }
                 return [
                     $role->getName() => $permissionsToRole->getPermissionsForRole($role)
                 ];
