@@ -5,8 +5,8 @@ namespace Sztyup\Acl\Middleware;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Sztyup\Acl\Contracts\UsesAcl;
 use Sztyup\Acl\Exception\NotAuthorizedException;
-use Sztyup\Acl\UsesAcl;
 
 class Acl
 {
