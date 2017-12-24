@@ -4,6 +4,7 @@ namespace Sztyup\Acl;
 
 use Illuminate\Support\Collection;
 use Sztyup\Acl\Contracts\NodeRepository;
+use Sztyup\Acl\Contracts\UsesAcl;
 use Tree\Builder\NodeBuilderInterface;
 use Tree\Node\NodeInterface;
 use Tree\Node\NodeTrait;
@@ -81,8 +82,8 @@ class Node implements NodeInterface
         $result = new Collection();
 
         foreach ($root->getChildren() as $child) {
-            if ($function($child->getValue())) {
-                $result[] = $inherits ? $child->getAncestorsAndSelf() : $child;
+            if ($function($child)) {
+                $result = $result->merge($inherits ? $child->getAncestorsAndSelf() : $child);
             }
             $result = $result->merge(
                 $this->filter($child, $function, $inherits)
@@ -101,15 +102,26 @@ class Node implements NodeInterface
      */
     public function filterTree(callable $filterFunction, $inherits = true)
     {
-        $result = $this->filter($this, $filterFunction, $inherits);
+        return $this->filter($this, $filterFunction, $inherits);
+    }
 
-        // Extract values from nodes
-        return array_map(
-            function (Node $node) {
-                return $node->getValue();
-            },
-            $result
-        );
+    /**
+     * It should be overwritten to exclude dummy root
+     *
+     * @return array Ancestors
+     */
+    public function getAncestors()
+    {
+        $parents = [];
+        $node = $this;
+        while ($parent = $node->getParent()) {
+            if (get_class($parent) != Node::class) {
+                array_unshift($parents, $parent);
+            }
+            $node = $parent;
+        }
+
+        return $parents;
     }
 
     public function mapWithKeys(callable $function)
