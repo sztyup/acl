@@ -11,7 +11,7 @@ trait Acl
     /** @var  AclManager */
     protected static $aclManager;
 
-    protected $roles;
+    private $roles;
 
     private $permissions;
 
@@ -20,7 +20,7 @@ trait Acl
         self::$aclManager = app(AclManager::class);
     }
 
-    public function getPermissions()
+    public function getPermissions(): array
     {
         if ($this->permissions == null) {
             $this->permissions = self::$aclManager->getPermissionsForUser($this);
@@ -29,7 +29,7 @@ trait Acl
         return $this->permissions;
     }
 
-    public function getRoles()
+    public function getRoles(): array
     {
         if ($this->roles == null) {
             $this->roles = self::$aclManager->getRolesForUser($this);
