@@ -9,21 +9,25 @@ use Sztyup\Acl\AclManager;
 trait Acl
 {
     /** @var  AclManager */
-    protected static $aclManager;
+    private $aclManager;
 
     private $roles;
 
     private $permissions;
 
-    protected static function bootAcl()
+    private function initAcl()
     {
-        self::$aclManager = app(AclManager::class);
+        if (!app()->bound(AclManager::class)) {
+            throw new \Exception('Trying to get ACL without being initialized');
+        }
+        $this->aclManager = app(AclManager::class);
     }
 
     public function getPermissions(): array
     {
+        $this->initAcl();
         if ($this->permissions == null) {
-            $this->permissions = self::$aclManager->getPermissionsForUser($this);
+            $this->permissions = $this->aclManager->getPermissionsForUser($this);
         }
 
         return $this->permissions;
@@ -31,21 +35,22 @@ trait Acl
 
     public function getRoles(): array
     {
+        $this->initAcl();
         if ($this->roles == null) {
-            $this->roles = self::$aclManager->getRolesForUser($this);
+            $this->roles = $this->aclManager->getRolesForUser($this);
         }
 
         return $this->roles;
     }
 
-    public function hasPermission($permissions, bool $all = false)
+    public function hasPermission($permissions, bool $all = false): bool
     {
-        $this->hasElementsInCollection($this->getPermissions(), Arr::wrap($permissions), $all);
+        return $this->hasElementsInCollection($this->getPermissions(), Arr::wrap($permissions), $all);
     }
 
-    public function hasRole($roles, bool $all = false)
+    public function hasRole($roles, bool $all = false): bool
     {
-        $this->hasElementsInCollection($this->getRoles(), Arr::wrap($roles), $all);
+        return $this->hasElementsInCollection($this->getRoles(), Arr::wrap($roles), $all);
     }
 
     private function hasElementsInCollection($collection, array $items, $all)
