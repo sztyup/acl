@@ -3,6 +3,7 @@
 namespace Sztyup\Acl\Middleware;
 
 use Closure;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Sztyup\Acl\Exception\NotAuthorizedException;
 use Sztyup\Acl\UsesAcl;
@@ -14,7 +15,7 @@ class Acl
         $action = $request->route()->getAction();
 
         $user = $request->user();
-        $this->checkUserImplementsInterface($user);
+        $this->checkUser($user);
 
         $roles = $action['is'];
         $permissions = $action['can'];
@@ -41,8 +42,12 @@ class Acl
         return $next($request);
     }
 
-    private function checkUserImplementsInterface($user)
+    private function checkUser($user)
     {
+        if ($user == null) {
+            throw new AuthenticationException();
+        }
+
         $reflection = new \ReflectionClass($user);
 
         if (!$reflection->implementsInterface(UsesAcl::class)) {
