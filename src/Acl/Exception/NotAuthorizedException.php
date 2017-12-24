@@ -6,15 +6,19 @@ use Exception;
 
 class NotAuthorizedException extends Exception
 {
-    protected $missionRoles;
-    protected $missionPermissions;
-
     public function __construct($missingRoles = [], $missingPermissions = [])
     {
-        $this->missionRoles = $missingRoles;
-        $this->missionPermissions = $missingPermissions;
+        $message = "You are not authorized\n";
 
-        parent::__construct("You are not authorized", 403, null);
+        foreach ($missingRoles as $role) {
+            $message .= 'role: ' . $role . "\n";
+        }
+
+        foreach ($missingPermissions as $permission) {
+            $message .= 'perm: ' . $permission . "\n";
+        }
+
+        parent::__construct($message, 403, null);
     }
 
 }
