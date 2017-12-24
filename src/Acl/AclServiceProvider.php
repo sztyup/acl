@@ -3,6 +3,7 @@
 namespace Sztyup\Acl;
 
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
 
@@ -44,6 +45,7 @@ class AclServiceProvider extends ServiceProvider
         $this->app->singleton(AclManager::class, function (Container $container) {
             return new AclManager(
                 $container->make(Guard::class),
+                $container->make(Repository::class),
                 $container
             );
         });
