@@ -6,7 +6,7 @@ class Permission extends Node
 {
     protected $title;
 
-    public function __construct($name, $title, $truth)
+    public function __construct($name, $title = '', $truth = null)
     {
         $this->title = $title;
 
