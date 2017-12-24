@@ -3,7 +3,7 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Permissions
+    | Repositories
     |--------------------------------------------------------------------------
     |
     | Here you should list all the permission used by your application
@@ -12,16 +12,36 @@ return [
     'permission_repository' => \Sztyup\Acl\Contracts\PermissionRepository::class,
     'role_repository' => \Sztyup\Acl\Contracts\RoleRepository::class,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pivot classes
+    |--------------------------------------------------------------------------
+    |
+    | Here you should list all the permission used by your application
+    |
+    */
     'permissions_to_role_class' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
     'role_to_user_class' => \Sztyup\Acl\Contracts\RoleToUser::class,
 
     /*
     |--------------------------------------------------------------------------
-    | Permission inheritance
+    | Inheritances
     |--------------------------------------------------------------------------
     |
     | You can enable/disable permission inheritance
     |
     */
-    'inheritance' => true,
+    'role_inheritance' => false,
+    'permission_inheritance' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dynamics
+    |--------------------------------------------------------------------------
+    |
+    | You can enable/disable dynamic role/permission behaviour
+    |
+    */
+    'dynamic_roles' => true,
+    'dynamic_permissions' => true,
 ];
