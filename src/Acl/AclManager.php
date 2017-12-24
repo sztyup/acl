@@ -14,7 +14,6 @@ use Sztyup\Acl\Exception\InvalidConfigurationException;
 
 class AclManager
 {
-
     const CACHE_KEY_MAP = '__permission_to_role_mapping';
 
     /**
