@@ -3,7 +3,6 @@
 namespace Sztyup\Acl\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Sztyup\Acl\UsesAcl;
 
 interface RoleToUser
 {
