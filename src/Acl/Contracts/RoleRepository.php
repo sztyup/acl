@@ -2,7 +2,7 @@
 
 namespace Sztyup\Acl\Contracts;
 
-interface RoleRepository
+interface RoleRepository extends NodeRepository
 {
     public function getRoles(): array;
 }
