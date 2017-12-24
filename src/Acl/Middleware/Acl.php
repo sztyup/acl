@@ -5,6 +5,7 @@ namespace Sztyup\Acl\Middleware;
 use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Sztyup\Acl\Contracts\UsesAcl;
 use Sztyup\Acl\Exception\NotAuthorizedException;
 
@@ -17,8 +18,8 @@ class Acl
         $user = $request->user();
         $this->checkUser($user);
 
-        $roles = $action['is'];
-        $permissions = $action['can'];
+        $roles = Arr::wrap($action['is'] ?? []);
+        $permissions = Arr::wrap($action['can'] ?? []);
 
         $missingRoles = [];
         $missingPermissions = [];
