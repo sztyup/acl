@@ -8,6 +8,7 @@ use Sztyup\Acl\Contracts\UsesAcl;
 use Tree\Builder\NodeBuilderInterface;
 use Tree\Node\NodeInterface;
 use Tree\Node\NodeTrait;
+use Tree\Visitor\PreOrderVisitor;
 use Tree\Visitor\YieldVisitor;
 
 class Node implements NodeInterface
@@ -127,9 +128,40 @@ class Node implements NodeInterface
     public function mapWithKeys(callable $function)
     {
         $collection = new Collection(
-            $this->accept(new YieldVisitor())
+            $this->accept(new PreOrderVisitor())
         );
 
         return $collection->mapWithKeys($function);
+    }
+
+    /**
+     * Returns all node (and theyre accendants if inheritance is enabled) who are listed in the values array
+     *
+     * @param array $values The nodes matched
+     * @return array
+     */
+    public function getNodesByNames(array $values)
+    {
+        return $this->filterTree(function (Node $node) use ($values) {
+            return in_array($node->getName(), $values);
+        });
+    }
+
+    /**
+     * Gives back all nodes applicable to the given user
+     *
+     * @param UsesAcl $user The user requesting nodes
+     * @return array The applicable nodes
+     */
+    public function getNodesByDynamic(UsesAcl $user)
+    {
+        return $this->filterTree(function (Node $node) use ($user) {
+            return $node->apply($user);
+        });
+    }
+
+    public function flatten()
+    {
+        return $this->accept(new PreOrderVisitor());
     }
 }

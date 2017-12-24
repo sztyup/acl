@@ -15,7 +15,6 @@ use Sztyup\Acl\Exception\InvalidConfigurationException;
 
 class AclManager
 {
-
     const CACHE_KEY_MAP = '__permission_to_role_mapping';
 
     /**
@@ -53,20 +52,40 @@ class AclManager
      */
     protected $roleToUser;
 
+    /**
+     * @var PermissionsToRole
+     */
+    protected $permissionsToRole;
+
+    /**
+     * @var PermissionRepository
+     */
+    protected $permissionRepository;
+
+    /**
+     * @var RoleRepository
+     */
+    protected $roleRepository;
+
     public function __construct(Guard $guard, Repository $cache, Container $container)
     {
         $this->user = $guard->user();
         $this->cache = $cache;
         $this->config = config('acl');
 
-        $permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
-        $roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
-        $permissionsToRole = $this->getClass('permission_to_role', PermissionsToRole::class, $container);
+        $this->permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
+        $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
+        $this->permissionsToRole = $this->getClass('permission_to_role', PermissionsToRole::class, $container);
         $this->roleToUser = $this->getClass('role_to_user', RoleToUser::class, $container);
 
-        $this->parseRoles($roleRepository);
-        $this->parsePermissions($permissionRepository);
-        $this->buildMap($permissionsToRole);
+        $this->load();
+    }
+
+    private function load()
+    {
+        $this->parseRoles();
+        $this->parsePermissions();
+        $this->buildMap();
     }
 
     protected function getClass($config, $interface, $container)
@@ -81,37 +100,38 @@ class AclManager
         return $container->make($class);
     }
 
-    protected function parseRoles(RoleRepository $roleRepository)
+    protected function parseRoles()
     {
         $this->roleTree = Node::buildTree(
             null,
-            $roleRepository->getRoles(),
-            $roleRepository
+            $this->roleRepository->getRoles(),
+            $this->roleRepository
         )->getNode();
     }
 
-    protected function parsePermissions(PermissionRepository $permissionRepository)
+    protected function parsePermissions()
     {
         $this->permissionTree = Node::buildTree(
             null,
-            $permissionRepository->getPermissions(),
-            $permissionRepository
+            $this->permissionRepository->getPermissions(),
+            $this->permissionRepository
         )->getNode();
     }
 
-    protected function buildMap(PermissionsToRole $permissionsToRole)
+    protected function buildMap()
     {
         if ($this->cache->has(self::CACHE_KEY_MAP)) {
             $this->map = $this->cache->get(self::CACHE_KEY_MAP);
         } else {
-            $this->map = $this->roleTree->mapWithKeys(function (Node $role) use ($permissionsToRole) {
+            $this->map = $this->roleTree->mapWithKeys(function (Node $role) {
                 if (!$role instanceof Role) {
                     return [];
                 }
                 return [
-                    $role->getName() => $permissionsToRole->getPermissionsForRole($role)
+                    $role->getName() => $this->permissionsToRole->getPermissionsForRole($role)
                 ];
             });
+
             $this->cache->forever(self::CACHE_KEY_MAP, $this->map);
         }
     }
@@ -122,12 +142,12 @@ class AclManager
 
         foreach ($user->getRoles() as $role) {
             $permissions = $permissions->merge(
-                $this->getNodesFromTree($this->permissionTree, $this->map[$role])
+                $this->permissionTree->getNodesByNames($this->map[$role])
             );
         }
 
         $permissions = $permissions->merge(
-            $this->getDynamicNodes($this->permissionTree, $user)
+            $this->permissionTree->getNodesByDynamic($user)
         );
 
         return $permissions->map(function (Permission $permission) {
@@ -139,39 +159,35 @@ class AclManager
     {
         $roles = new Collection();
 
-        $roles = $roles->merge($this->roleToUser->getRolesForUser($user));
+        $roles = $roles->merge(
+            $this->roleToUser->getRolesForUser($user)
+        );
 
-        $roles = $roles->merge($this->getDynamicNodes($this->roleTree, $user));
+        $roles = $roles->merge(
+            $this->roleTree->getNodesByDynamic($user)
+        );
 
         return $roles->map(function (Role $role) {
             return $role->getName();
         })->toArray();
     }
 
-    /**
-     * Returns all permission node (and theyre accendants if inheritance is enabled) who are listed in the values array
-     * @param Node $tree The tree to operate on
-     * @param array $values The permissions who are needed
-     * @return array
-     */
-    protected function getNodesFromTree(Node $tree, array $values)
+    public function getPermissions()
     {
-        return $tree->filterTree(function (Node $node) use ($values) {
-            return in_array($node->getName(), $values);
-        });
+        return $this->permissionTree->flatten();
     }
 
-    /**
-     * Gives back all nodes applicable to the given user
-     *
-     * @param Node $tree The tree to operate on
-     * @param UsesAcl $user The user requesting nodes
-     * @return array The applicable nodes
-     */
-    protected function getDynamicNodes(Node $tree, UsesAcl $user)
+    public function getRoles()
     {
-        return $tree->filterTree(function (Node $node) use ($user) {
-            return $node->apply($user);
-        });
+        return $this->roleTree->flatten();
+    }
+
+    public function clearCache()
+    {
+        $this->roleTree = null;
+        $this->permissionTree = null;
+        $this->map = null;
+
+        $this->load();
     }
 }
