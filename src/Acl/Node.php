@@ -9,7 +9,7 @@ use Tree\Node\NodeInterface;
 use Tree\Node\NodeTrait;
 use Tree\Visitor\YieldVisitor;
 
-abstract class Node implements NodeInterface
+class Node implements NodeInterface
 {
     use NodeTrait;
 
