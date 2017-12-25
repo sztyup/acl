@@ -2,10 +2,8 @@
 
 namespace Sztyup\Acl;
 
-use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Contracts\Cache\Repository;
-use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Compilers\BladeCompiler;
 
 class AclServiceProvider extends ServiceProvider
 {
@@ -42,32 +40,28 @@ class AclServiceProvider extends ServiceProvider
             'acl'
         );
 
-        $this->app->singleton(AclManager::class, function (Container $container) {
-            return new AclManager(
-                $container->make(Guard::class),
-                $container->make(Repository::class),
-                $container
-            );
-        });
+        $this->app->singleton(AclManager::class);
     }
 
     protected function registerBlade()
     {
+        $blade = $this->app->make(BladeCompiler::class);
+
         // role
-        \Blade::directive('role', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->hasRole({$expression})): ?>";
+        $blade->directive('role', function ($expression) {
+            return "<?php if (Auth::check() && Auth::user()->getAcl()->hasRole({$expression})): ?>";
         });
 
-        \Blade::directive('endrole', function () {
+        $blade->directive('endrole', function () {
             return "<?php endif; ?>";
         });
 
         // permission
-        \Blade::directive('permission', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->can({$expression})): ?>";
+        $blade->directive('permission', function ($expression) {
+            return "<?php if (Auth::check() && Auth::user()->getAcl()->can({$expression})): ?>";
         });
 
-        \Blade::directive('endpermission', function () {
+        $blade->directive('endpermission', function () {
             return "<?php endif; ?>";
         });
     }
