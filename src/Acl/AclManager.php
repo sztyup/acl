@@ -128,7 +128,7 @@ class AclManager
 
         foreach ($user->getRoles() as $role) {
             $permissions = $permissions->merge(
-                $this->permissionTree->getNodesByNames($this->map[$role])
+                $this->permissionTree->getNodesByNames($this->map[$role->getName()])
             );
         }
 
@@ -136,9 +136,7 @@ class AclManager
             $this->permissionTree->getNodesByDynamic($user)
         );
 
-        return $permissions->map(function (Permission $permission) {
-            return $permission->getName();
-        })->toArray();
+        return $permissions;
     }
 
     public function getDynamicRolesForUser(HasAcl $user): Collection
