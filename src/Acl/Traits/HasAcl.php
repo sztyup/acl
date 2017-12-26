@@ -31,21 +31,11 @@ trait HasAcl
         if ($this instanceof Authenticatable) {
             $this->aclManager = $aclManager;
 
-            $this->aclRoles = $cache->rememberForever(
-                '__acl_role_user_' . $this->getAuthIdentifier(),
-                function () {
-                    return $this->roles->merge(
-                        $this->aclManager->getDynamicRolesForUser($this)
-                    );
-                }
+            $this->aclRoles = $this->roles->merge(
+                $this->aclManager->getDynamicRolesForUser($this)
             );
 
-            $this->aclPermissions = $cache->rememberForever(
-                '__acl_permission_user_' . $this->getAuthIdentifier(),
-                function () {
-                    return $this->aclManager->getPermissionsForUser($this);
-                }
-            );
+            $this->aclPermissions = $this->aclManager->getPermissionsForUser($this);
         } else {
             throw new \Exception('User object must implement Authenticable');
         }
