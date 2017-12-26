@@ -16,4 +16,14 @@ class Role extends Model implements RoleContract
     {
         return $this->name;
     }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
 }
