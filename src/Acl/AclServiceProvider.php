@@ -59,7 +59,7 @@ class AclServiceProvider extends ServiceProvider
 
         // role
         $blade->directive('role', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->getAcl()->hasRole({$expression})): ?>";
+            return "<?php if (Auth::check() && Auth::user()->hasRole({$expression})): ?>";
         });
 
         $blade->directive('endrole', function () {
@@ -68,7 +68,7 @@ class AclServiceProvider extends ServiceProvider
 
         // permission
         $blade->directive('permission', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->getAcl()->can({$expression})): ?>";
+            return "<?php if (Auth::check() && Auth::user()->hasPermission({$expression})): ?>";
         });
 
         $blade->directive('endpermission', function () {
