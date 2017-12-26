@@ -66,7 +66,7 @@ trait HasAcl
         return $this->hasElementsInCollection($this->aclRoles, Arr::wrap($roles), $all);
     }
 
-    private function hasElementsInCollection($collection, array $items, $all)
+    private function hasElementsInCollection(Collection $collection, array $items, $all)
     {
         $items = new Collection($items);
 
