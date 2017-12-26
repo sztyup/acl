@@ -14,6 +14,9 @@ class Acl
 {
     protected $acl;
 
+    /** @var HasAcl */
+    protected $user;
+
     public function __construct(AclManager $acl)
     {
         $this->acl = $acl;
@@ -31,13 +34,13 @@ class Acl
         $missingPermissions = [];
 
         foreach ($roles as $role) {
-            if (!$user->hasRole($role)) {
+            if (!$this->user->hasRole($role)) {
                 $missingRoles[] = $role;
             }
         }
 
         foreach ($permissions as $permission) {
-            if (!$user->hasPermission($permission)) {
+            if (!$this->user->hasPermission($permission)) {
                 $missingPermissions[] = $permission;
             }
         }
@@ -61,6 +64,8 @@ class Acl
             return false;
         }
 
+        $this->user = $user;
+
         if ($request->ajax() || $request->wantsJson()) { // Dont redirect json
             return response('Unauthorized.', 401);
         }
@@ -79,6 +84,7 @@ class Acl
     private function parseAcl(Request $request)
     {
         $action = $request->route()->getAction();
+
         return [
             Arr::wrap($action['is'] ?? []),
             Arr::wrap($action['can'] ?? [])
