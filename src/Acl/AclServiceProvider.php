@@ -51,6 +51,8 @@ class AclServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(AclManager::class);
+
+        $this->app->alias(AclManager::class, 'acl');
     }
 
     protected function registerBlade()
