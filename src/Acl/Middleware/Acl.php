@@ -21,13 +21,11 @@ class Acl
 
     public function handle(Request $request, Closure $next)
     {
-        if ($auth = $this->parseAuth($request)) {
-            return $auth;
-        };
-
         list($roles, $permissions) = $this->parseAcl($request);
 
-        $user = $this->getUser($request);
+        if ($auth = $this->parseAuth($request, count($roles) + count($permissions) > 0)) {
+            return $auth;
+        };
 
         $missingRoles = [];
         $missingPermissions = [];
@@ -51,11 +49,11 @@ class Acl
         return $next($request);
     }
 
-    private function parseAuth(Request $request)
+    private function parseAuth(Request $request, bool $acl)
     {
         $auth = $request->route()->getAction('auth');
 
-        if ($auth == null) { // Auth is not required
+        if ($auth == null && $acl == false) { // Auth is not required
             return false;
         }
 
@@ -75,7 +73,7 @@ class Acl
             return redirect()->route($auth['route']);
         }
 
-        throw new AuthenticationException();
+        return redirect()->route('main.auth');
     }
 
     private function parseAcl(Request $request)
@@ -87,11 +85,11 @@ class Acl
         ];
     }
 
-    private function getUser(Request $request): HasAcl
+    private function getUser(Request $request)
     {
         $user = $request->user();
         if ($user == null) {
-            throw new AuthenticationException();
+            return null;
         }
 
         $reflection = new \ReflectionClass($user);
