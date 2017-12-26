@@ -2,8 +2,10 @@
 
 namespace Sztyup\Acl;
 
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use Sztyup\Acl\Contracts\HasAcl;
 
 class AclServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,14 @@ class AclServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->registerBlade();
+
+        $model = config('acl.user_model');
+        $model::retrieved(function (HasAcl $user) {
+            $user->initAcl(
+                $this->app->make(Repository::class),
+                $this->app->make(AclManager::class)
+            );
+        });
     }
 
     /**
