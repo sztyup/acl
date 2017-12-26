@@ -3,6 +3,16 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | User model
+    |--------------------------------------------------------------------------
+    |
+    | Its very important to define the user model here
+    |
+    */
+    'user_model' => \Illuminate\Contracts\Auth\Authenticatable::class,
+
+    /*
+    |--------------------------------------------------------------------------
     | Repositories
     |--------------------------------------------------------------------------
     |
@@ -11,17 +21,6 @@ return [
     */
     'permission_repository' => \Sztyup\Acl\Contracts\PermissionRepository::class,
     'role_repository' => \Sztyup\Acl\Contracts\RoleRepository::class,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Pivot classes
-    |--------------------------------------------------------------------------
-    |
-    | Here you should list all the permission used by your application
-    |
-    */
-    'permission_to_role' => \Sztyup\Acl\Contracts\PermissionsToRole::class,
-    'role_to_user' => \Sztyup\Acl\Contracts\RoleToUser::class,
 
     /*
     |--------------------------------------------------------------------------
