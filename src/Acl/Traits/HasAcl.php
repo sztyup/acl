@@ -31,7 +31,7 @@ trait HasAcl
         if ($this instanceof Authenticatable) {
             $this->aclManager = $aclManager;
 
-            $this->aclRoles = $this->roles->merge(
+            $this->aclRoles = $this->roles->toBase()->merge(
                 $this->aclManager->getDynamicRolesForUser($this)
             );
 
@@ -39,8 +39,6 @@ trait HasAcl
         } else {
             throw new \Exception('User object must implement Authenticable');
         }
-
-        $this->aclManager = $aclManager;
     }
 
     /**
