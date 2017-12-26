@@ -60,11 +60,9 @@ class Acl
             return false;
         }
 
-        if ($user = $this->getUser($request)) { // If authenticated we are done
+        if ($this->user = $this->getUser($request)) { // If authenticated we are done
             return false;
         }
-
-        $this->user = $user;
 
         if ($request->ajax() || $request->wantsJson()) { // Dont redirect json
             return response('Unauthorized.', 401);

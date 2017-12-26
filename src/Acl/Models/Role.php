@@ -12,6 +12,11 @@ class Role extends Model implements RoleContract
         return $this->belongsToMany(config('acl.user_model'));
     }
 
+    public function permissions()
+    {
+        return $this->hasMany(PermissionToRole::class, 'role_id');
+    }
+
     public function getName(): string
     {
         return $this->name;
