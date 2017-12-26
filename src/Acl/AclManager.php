@@ -57,7 +57,6 @@ class AclManager
 
     public function __construct(Guard $guard, Repository $cache, Container $container)
     {
-        $this->user = $guard->user();
         $this->cache = $cache;
         $this->config = config('acl');
 
