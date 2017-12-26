@@ -3,25 +3,29 @@
 namespace Sztyup\Acl;
 
 use Illuminate\Support\Collection;
-use Sztyup\Acl\Contracts\NodeRepository;
-use Sztyup\Acl\Contracts\UsesAcl;
+use Sztyup\Acl\Contracts\HasAcl;
 use Tree\Builder\NodeBuilderInterface;
 use Tree\Node\NodeInterface;
 use Tree\Node\NodeTrait;
-use Tree\Visitor\PreOrderVisitor;
-use Tree\Visitor\YieldVisitor;
 
 class Node implements NodeInterface
 {
     use NodeTrait;
 
+    protected $id;
     protected $truth;
     protected $name;
 
-    public function __construct($name, $truth)
+    public function __construct($name, $truth, $id = 0)
     {
+        $this->id = $id;
         $this->name = $name;
         $this->truth = $truth;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
     }
 
     public function getName(): string
@@ -30,12 +34,12 @@ class Node implements NodeInterface
     }
 
     /**
-     * It tells wheter the current node is given to the user regardless of the persistent state
+     * It tells whether the current node is given to the user regardless of the persistent state
      *
-     * @param UsesAcl $user
+     * @param HasAcl $user
      * @return bool
      */
-    public function apply(UsesAcl $user): bool
+    public function apply(HasAcl $user): bool
     {
         if (!is_callable($this->truth)) {
             return false;
@@ -49,10 +53,9 @@ class Node implements NodeInterface
      *
      * @param NodeBuilderInterface $tree
      * @param $permissions array A recursive array with the permissions
-     * @param NodeRepository $repository
      * @return NodeBuilderInterface The NodeInterface for the root of the tree
      */
-    public static function buildTree($tree, array $permissions, NodeRepository $repository)
+    public static function buildTree($tree, array $permissions)
     {
         if ($tree == null) {
             $tree = new NodeBuilder();
@@ -62,12 +65,11 @@ class Node implements NodeInterface
         }
 
         foreach ($permissions as $child => $properties) {
+            list($permission, $children) = self::parse($child, $properties);
+
             self::buildTree(
-                $tree->tree(
-                    $repository->parse($child, $properties)
-                ),
-                $repository->getChildren($child, $properties),
-                $repository
+                $tree->tree($permission),
+                $children
             );
         }
 
@@ -78,7 +80,12 @@ class Node implements NodeInterface
         }
     }
 
-    protected function filter(Node $root, callable $function, $inherits)
+    protected static function parse($key, $node)
+    {
+        return new Node('dummy', null);
+    }
+
+    protected function filter(Node $root, callable $function, $inherits): Collection
     {
         $result = new Collection();
 
@@ -99,15 +106,15 @@ class Node implements NodeInterface
      *
      * @param callable $filterFunction
      * @param bool $inherits
-     * @return array
+     * @return Collection
      */
-    public function filterTree(callable $filterFunction, $inherits = true)
+    public function filterTree(callable $filterFunction, $inherits = true): Collection
     {
         return $this->filter($this, $filterFunction, $inherits);
     }
 
     /**
-     * It should be overwritten to exclude dummy root
+     * It is overwritten to exclude dummy root
      *
      * @return array Ancestors
      */
@@ -127,9 +134,7 @@ class Node implements NodeInterface
 
     public function mapWithKeys(callable $function)
     {
-        $collection = new Collection(
-            $this->accept(new PreOrderVisitor())
-        );
+        $collection = $this->flatten();
 
         return $collection->mapWithKeys($function);
     }
@@ -138,9 +143,9 @@ class Node implements NodeInterface
      * Returns all node (and theyre accendants if inheritance is enabled) who are listed in the values array
      *
      * @param array $values The nodes matched
-     * @return array
+     * @return Collection
      */
-    public function getNodesByNames(array $values)
+    public function getNodesByNames(array $values): Collection
     {
         return $this->filterTree(function (Node $node) use ($values) {
             return in_array($node->getName(), $values);
@@ -150,18 +155,18 @@ class Node implements NodeInterface
     /**
      * Gives back all nodes applicable to the given user
      *
-     * @param UsesAcl $user The user requesting nodes
-     * @return array The applicable nodes
+     * @param HasAcl $user The user requesting nodes
+     * @return Collection The applicable nodes
      */
-    public function getNodesByDynamic(UsesAcl $user)
+    public function getNodesByDynamic(HasAcl $user): Collection
     {
         return $this->filterTree(function (Node $node) use ($user) {
             return $node->apply($user);
         });
     }
 
-    public function flatten()
+    public function flatten(): Collection
     {
-        return $this->accept(new PreOrderVisitor());
+        return $this->accept(new TreeVisitor());
     }
 }
