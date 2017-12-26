@@ -5,10 +5,12 @@ namespace Sztyup\Acl;
 class Permission extends Node
 {
     protected $title;
+    protected $sensitive;
 
-    public function __construct($name, $title = '', $id = 0, $truth = null)
+    public function __construct($name, $title = '', $id = 0, $truth = null, $sensitive = false)
     {
         $this->title = $title;
+        $this->sensitive = $sensitive;
 
         parent::__construct($name, $truth, $id);
     }
@@ -16,6 +18,11 @@ class Permission extends Node
     public function getTitle(): string
     {
         return $this->title ?? '';
+    }
+
+    public function isSensitive(): bool
+    {
+        return $this->sensitive ?? false;
     }
 
     protected static function parse($key, $node)
@@ -27,11 +34,13 @@ class Permission extends Node
                 $title = $field;
             } elseif (is_callable($field)) {
                 $truth = $field;
+            } elseif (is_bool($field)) {
+                $sensitive = $field;
             }
         }
 
         return [
-            new Permission($key, $title ?? '', $truth ?? null),
+            new Permission($key, $title ?? '', $truth ?? null, $sensitive ?? false),
             $children ?? []
         ];
     }
