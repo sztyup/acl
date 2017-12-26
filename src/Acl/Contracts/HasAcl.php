@@ -2,8 +2,9 @@
 
 namespace Sztyup\Acl\Contracts;
 
-use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Support\Collection;
 use Sztyup\Acl\AclManager;
 
 interface HasAcl extends Authenticatable
@@ -13,6 +14,6 @@ interface HasAcl extends Authenticatable
     public function hasRole($role): bool;
     public function hasPermission($permission): bool;
 
-    public function addRole($role);
-    public function revokeRole($role);
+    public function getRoles(): Collection;
+    public function getPermissions(): Collection;
 }
