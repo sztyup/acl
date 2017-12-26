@@ -2,6 +2,7 @@
 
 namespace Sztyup\Acl;
 
+use Illuminate\Support\Collection;
 use Tree\Node\NodeInterface;
 use Tree\Visitor\PreOrderVisitor;
 
@@ -14,10 +15,10 @@ class TreeVisitor extends PreOrderVisitor
             return parent::visit($node);
         }
 
-        $nodes = [];
+        $nodes = new Collection();
 
         foreach ($node->getChildren() as $child) {
-            $nodes = array_merge($nodes, parent::visit($child));
+            $nodes = $nodes->merge(parent::visit($child));
         }
 
         return $nodes;
