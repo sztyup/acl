@@ -45,7 +45,7 @@ class Role extends Node
         }
 
         return [
-            new Role($key, $permissions ?? [], $title ?? '', $truth ?? null),
+            new Role($key, $permissions ?? [], $title ?? '', '', $truth ?? null),
             []
         ];
     }
