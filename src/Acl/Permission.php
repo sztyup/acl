@@ -35,4 +35,9 @@ class Permission extends Node
             $children ?? []
         ];
     }
+
+    public function __toString()
+    {
+        return $this->getName();
+    }
 }

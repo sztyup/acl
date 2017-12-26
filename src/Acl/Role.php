@@ -49,4 +49,9 @@ class Role extends Node
             []
         ];
     }
+
+    public function __toString()
+    {
+        return $this->getName();
+    }
 }
