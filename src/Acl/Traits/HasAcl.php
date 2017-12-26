@@ -15,20 +15,32 @@ trait HasAcl
     protected $aclManager;
 
     /** @var Collection */
-    protected $permissions;
+    protected $aclPermissions;
+
+    /** @var Collection */
+    protected $aclRoles;
 
     public function roles()
     {
-        $this->belongsToMany(Role::class);
+        return $this->belongsToMany(Role::class);
     }
 
     public function initAcl(Repository $cache, AclManager $aclManager)
     {
         if ($this instanceof Authenticatable) {
-            $this->permissions = $cache->rememberForever(
+            $this->aclPermissions = $cache->rememberForever(
                 '__acl_permission_user_' . $this->getAuthIdentifier(),
                 function () {
                     return $this->aclManager->getPermissionsForUser($this);
+                }
+            );
+
+            $this->aclRoles = $cache->rememberForever(
+                '__acl_role_user_' . $this->getAuthIdentifier(),
+                function () {
+                    return $this->roles->merge(
+                        $this->aclManager->getDynamicRolesForUser($this)
+                    );
                 }
             );
         } else {
@@ -38,20 +50,14 @@ trait HasAcl
         $this->aclManager = $aclManager;
     }
 
-    public function addRole($role)
-    {
-        $this->roles->push($role);
-        $this->aclManager->addRoleToUser($this, $role);
-    }
-
     public function hasPermission($permissions, bool $all = false): bool
     {
-        return $this->hasElementsInCollection($this->permissions, Arr::wrap($permissions), $all);
+        return $this->hasElementsInCollection($this->aclPermissions, Arr::wrap($permissions), $all);
     }
 
     public function hasRole($roles, bool $all = false): bool
     {
-        return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
+        return $this->hasElementsInCollection($this->aclRoles, Arr::wrap($roles), $all);
     }
 
     private function hasElementsInCollection($collection, array $items, $all)
