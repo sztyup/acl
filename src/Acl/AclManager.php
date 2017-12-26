@@ -62,7 +62,7 @@ class AclManager
         $this->config = config('acl');
 
         $this->permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
-        $this->roleRepository = $this->getClass('role_repository', PermissionRepository::class, $container);
+        $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
         $this->staticRoles = RoleModel::all();
 
         $this->load();
@@ -70,6 +70,7 @@ class AclManager
 
     private function load()
     {
+        $this->parseRoles();
         $this->parsePermissions();
         $this->buildMap();
     }
@@ -86,20 +87,26 @@ class AclManager
         return $container->make($class);
     }
 
+    protected function parseRoles()
+    {
+        $this->roleTree =  Role::buildTree(
+            null,
+            $this->roleRepository->getRoles()
+        )->getNode();
+    }
+
     protected function parsePermissions()
     {
-        $this->permissionTree = $this->cache->rememberForever(
-            self::CACHE_KEY_PERMISSIONS,
-            function () {
-                Permission::buildTree(null, $this->permissionRepository->getPermissions())->getNode();
-            }
-        );
+        $this->permissionTree = Permission::buildTree(
+            null,
+            $this->permissionRepository->getPermissions()
+        )->getNode();
     }
 
     protected function buildMap()
     {
         $this->map = $this->cache->rememberForever(self::CACHE_KEY_MAP, function () {
-            return $this->staticRoles
+            return $this->staticRoles->toBase()
                 ->mapWithKeys(function (RoleModel $role) {
                     return [
                         $role->name => PermissionToRole::where('role_id', $role->id)->get()
