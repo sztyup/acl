@@ -20,5 +20,4 @@ class NotAuthorizedException extends Exception
 
         parent::__construct($message, 403, null);
     }
-
 }

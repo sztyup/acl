@@ -10,5 +10,4 @@ class InvalidConfigurationException extends Exception
     {
         parent::__construct("The given configuration is invalid, faulty key: " . $key);
     }
-
 }
