@@ -109,7 +109,7 @@ class AclManager
             return $this->staticRoles->toBase()
                 ->mapWithKeys(function (RoleModel $role) {
                     return [
-                        $role->name => PermissionToRole::where('role_id', $role->id)->get()
+                        $role->name => PermissionToRole::where('role_id', $role->id)->get(['permission'])->pluck('permission')
                     ];
                 })
                 ->merge(
@@ -118,7 +118,7 @@ class AclManager
                             $role->getName() => $role->getPermissions()
                         ];
                     })
-                );
+                )->toArray();
         });
     }
 
