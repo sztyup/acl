@@ -65,7 +65,7 @@ class Node implements NodeInterface
         }
 
         foreach ($permissions as $child => $properties) {
-            list($permission, $children) = self::parse($child, $properties);
+            list($permission, $children) = static::parse($child, $properties);
 
             self::buildTree(
                 $tree->tree($permission),
@@ -82,7 +82,10 @@ class Node implements NodeInterface
 
     protected static function parse($key, $node)
     {
-        return new Node('dummy', null);
+        return [
+            new Node('dummy', null),
+            []
+        ];
     }
 
     protected function filter(Node $root, callable $function, $inherits): Collection
