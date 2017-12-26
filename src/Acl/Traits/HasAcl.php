@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\AclManager;
 use Sztyup\Acl\Models\Role;
+use Sztyup\Acl\Contracts\Role as RoleContract;
 
 trait HasAcl
 {
@@ -28,12 +29,7 @@ trait HasAcl
     public function initAcl(Repository $cache, AclManager $aclManager)
     {
         if ($this instanceof Authenticatable) {
-            $this->aclPermissions = $cache->rememberForever(
-                '__acl_permission_user_' . $this->getAuthIdentifier(),
-                function () {
-                    return $this->aclManager->getPermissionsForUser($this);
-                }
-            );
+            $this->aclManager = $aclManager;
 
             $this->aclRoles = $cache->rememberForever(
                 '__acl_role_user_' . $this->getAuthIdentifier(),
@@ -43,11 +39,31 @@ trait HasAcl
                     );
                 }
             );
+
+            $this->aclPermissions = $cache->rememberForever(
+                '__acl_permission_user_' . $this->getAuthIdentifier(),
+                function () {
+                    return $this->aclManager->getPermissionsForUser($this);
+                }
+            );
         } else {
             throw new \Exception('User object must implement Authenticable');
         }
 
         $this->aclManager = $aclManager;
+    }
+
+    /**
+     * @return Collection|RoleContract[]
+     */
+    public function getRoles(): Collection
+    {
+        return $this->aclRoles;
+    }
+
+    public function getPermissions(): Collection
+    {
+        return $this->aclPermissions;
     }
 
     public function hasPermission($permissions, bool $all = false): bool
