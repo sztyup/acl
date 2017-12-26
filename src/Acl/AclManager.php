@@ -140,7 +140,7 @@ class AclManager
 
     public function getDynamicRolesForUser(HasAcl $user): Collection
     {
-        return $this->roleTree->getNodesByDynamic($user);
+        return $this->roleTree->getNodesByDynamic($user)->toBase();
     }
 
     public function getPermissions()
