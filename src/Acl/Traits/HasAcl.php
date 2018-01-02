@@ -7,8 +7,6 @@ use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\AclManager;
-use Sztyup\Acl\Models\Role;
-use Sztyup\Acl\Contracts\Role as RoleContract;
 
 trait HasAcl
 {
@@ -21,17 +19,12 @@ trait HasAcl
     /** @var Collection */
     protected $aclRoles;
 
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class);
-    }
-
     public function initAcl(Repository $cache, AclManager $aclManager)
     {
         if ($this instanceof Authenticatable) {
             $this->aclManager = $aclManager;
 
-            $this->aclRoles = $this->roles->toBase()->merge(
+            $this->aclRoles = $this->getRoles()->merge(
                 $this->aclManager->getDynamicRolesForUser($this)
             );
 
@@ -39,14 +32,6 @@ trait HasAcl
         } else {
             throw new \Exception('User object must implement Authenticable');
         }
-    }
-
-    /**
-     * @return Collection|RoleContract[]
-     */
-    public function getRoles(): Collection
-    {
-        return $this->aclRoles;
     }
 
     public function getPermissions(): Collection

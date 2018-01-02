@@ -21,6 +21,7 @@ return [
     */
     'permission_repository' => \Sztyup\Acl\Contracts\PermissionRepository::class,
     'role_repository' => \Sztyup\Acl\Contracts\RoleRepository::class,
+    'permission_to_role_repository' => \Sztyup\Acl\Contracts\PermissionToRoleRepository::class,
 
     /*
     |--------------------------------------------------------------------------

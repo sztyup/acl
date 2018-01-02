@@ -3,7 +3,6 @@
 namespace Sztyup\Acl\Middleware;
 
 use Closure;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Sztyup\Acl\AclManager;
@@ -12,6 +11,7 @@ use Sztyup\Acl\Exception\NotAuthorizedException;
 
 class Acl
 {
+    /** @var AclManager */
     protected $acl;
 
     /** @var HasAcl */
@@ -24,10 +24,15 @@ class Acl
 
     public function handle(Request $request, Closure $next)
     {
+        $this->user = $this->getUser($request);
+
         list($roles, $permissions) = $this->parseAcl($request);
 
-        if ($auth = $this->parseAuth($request, count($roles) + count($permissions) > 0)) {
-            return $auth;
+        $required = count($roles) + count($permissions) > 0;
+        $authIsNeeded = $this->parseAuth($request, $required);
+
+        if ($authIsNeeded) {
+            return $authIsNeeded;
         };
 
         $missingRoles = [];
@@ -60,7 +65,7 @@ class Acl
             return false;
         }
 
-        if ($this->user = $this->getUser($request)) { // If authenticated we are done
+        if ($this->user) { // If authenticated we are done
             return false;
         }
 

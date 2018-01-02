@@ -8,11 +8,10 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\Contracts\HasAcl;
 use Sztyup\Acl\Contracts\PermissionRepository;
+use Sztyup\Acl\Contracts\PermissionToRoleRepository;
 use Sztyup\Acl\Contracts\RoleRepository;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
-use Sztyup\Acl\Models\PermissionToRole;
 use Sztyup\Acl\Role as RoleNode;
-use Sztyup\Acl\Models\Role as RoleModel;
 
 class AclManager
 {
@@ -50,6 +49,9 @@ class AclManager
     /** @var Collection */
     protected $staticRoles;
 
+    /** @var PermissionToRoleRepository */
+    protected $permissionToRoleRepository;
+
     /**
      * @var array Configuration
      */
@@ -61,18 +63,19 @@ class AclManager
         $this->config = config('acl');
 
         $this->permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
+        $this->permissionToRoleRepository = $this->getClass(
+            'permission_to_role_repository',
+            PermissionRepository::class,
+            $container
+        );
         $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
-        $this->staticRoles = RoleModel::all();
+        $this->staticRoles = $this->roleRepository->getRoles();
 
-        $this->load();
-    }
-
-    private function load()
-    {
         $this->parseRoles();
         $this->parsePermissions();
         $this->buildMap();
     }
+
 
     protected function getClass($config, $interface, Container $container)
     {
@@ -106,9 +109,9 @@ class AclManager
     {
         $this->map = $this->cache->rememberForever(self::CACHE_KEY_MAP, function () {
             return $this->staticRoles->toBase()
-                ->mapWithKeys(function (RoleModel $role) {
+                ->mapWithKeys(function ($role) {
                     return [
-                        $role->name => PermissionToRole::where('role_id', $role->id)->get(['permission'])->pluck('permission')
+                        $role->getName() => $this->permissionToRoleRepository->getPermissionsForRole($role)
                     ];
                 })
                 ->merge(
@@ -155,14 +158,8 @@ class AclManager
 
     public function clearCache()
     {
-        $this->cache->forget(self::CACHE_KEY_PERMISSIONS);
-        $this->cache->forget(self::CACHE_KEY_ROLES);
         $this->cache->forget(self::CACHE_KEY_MAP);
 
-        $this->roleTree = null;
-        $this->permissionTree = null;
-        $this->map = null;
-
-        $this->load();
+        $this->buildMap();
     }
 }
