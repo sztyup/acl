@@ -65,7 +65,7 @@ class AclManager
         $this->permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
         $this->permissionToRoleRepository = $this->getClass(
             'permission_to_role_repository',
-            PermissionRepository::class,
+            PermissionToRoleRepository::class,
             $container
         );
         $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
