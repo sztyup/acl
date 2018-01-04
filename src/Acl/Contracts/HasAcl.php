@@ -14,6 +14,6 @@ interface HasAcl extends Authenticatable
     public function hasRole($role): bool;
     public function hasPermission($permission): bool;
 
-    public function getRoles(): Collection;
+    public function getRoles();
     public function getPermissions(): Collection;
 }
