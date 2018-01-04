@@ -24,7 +24,8 @@ trait HasAcl
         if ($this instanceof Authenticatable) {
             $this->aclManager = $aclManager;
 
-            $this->aclRoles = $this->getRoles()->merge(
+            $roles = Collection::make($this->getRoles()->toArray());
+            $this->aclRoles = $roles->merge(
                 $this->aclManager->getDynamicRolesForUser($this)
             );
 
@@ -52,6 +53,8 @@ trait HasAcl
     private function hasElementsInCollection(Collection $collection, array $items, $all)
     {
         $items = new Collection($items);
+
+        $collection = $collection->map->getName();
 
         $result = $items->intersect($collection);
 
