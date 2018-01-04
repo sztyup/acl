@@ -28,14 +28,6 @@ class AclServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->registerBlade();
-
-        $model = config('acl.user_model');
-        $model::retrieved(function (HasAcl $user) {
-            $user->initAcl(
-                $this->app->make(Repository::class),
-                $this->app->make(AclManager::class)
-            );
-        });
     }
 
     /**
