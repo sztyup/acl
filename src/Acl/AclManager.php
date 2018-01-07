@@ -112,7 +112,6 @@ class AclManager
         $this->map = $this->cache->rememberForever(self::CACHE_KEY_MAP, function () {
             return $this->staticRoles
                 ->mapWithKeys(function ($role) {
-                    dd($role);
                     return [
                         $role->getName() => $this->permissionToRoleRepository->getPermissionsForRole($role)
                     ];
