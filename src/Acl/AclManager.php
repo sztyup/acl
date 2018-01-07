@@ -10,6 +10,7 @@ use Sztyup\Acl\Contracts\HasAcl;
 use Sztyup\Acl\Contracts\PermissionRepository;
 use Sztyup\Acl\Contracts\PermissionToRoleRepository;
 use Sztyup\Acl\Contracts\RoleRepository;
+use Sztyup\Acl\Contracts\StaticRoleRepository;
 use Sztyup\Acl\Exception\InvalidConfigurationException;
 use Sztyup\Acl\Role as RoleNode;
 
@@ -69,7 +70,8 @@ class AclManager
             $container
         );
         $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
-        $this->staticRoles = new Collection($this->roleRepository->getRoles());
+        $staticRepo = $this->getClass('static_role_repository', StaticRoleRepository::class, $container);
+        $this->staticRoles = Collection::make($staticRepo->getRoles());
 
         $this->parseRoles();
         $this->parsePermissions();
@@ -108,8 +110,9 @@ class AclManager
     protected function buildMap()
     {
         $this->map = $this->cache->rememberForever(self::CACHE_KEY_MAP, function () {
-            return $this->staticRoles->toBase()
+            return $this->staticRoles
                 ->mapWithKeys(function ($role) {
+                    dd($role);
                     return [
                         $role->getName() => $this->permissionToRoleRepository->getPermissionsForRole($role)
                     ];
