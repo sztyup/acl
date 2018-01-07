@@ -69,7 +69,7 @@ class AclManager
             $container
         );
         $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
-        $this->staticRoles = $this->roleRepository->getRoles();
+        $this->staticRoles = new Collection($this->roleRepository->getRoles());
 
         $this->parseRoles();
         $this->parsePermissions();
