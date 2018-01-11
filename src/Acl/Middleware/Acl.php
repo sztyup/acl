@@ -73,11 +73,11 @@ class Acl
             return response('Unauthorized.', 401);
         }
 
-        if ($auth['target']) {
+        if (isset($auth['target'])) {
             return redirect()->route('main.auth.redirect', $auth['target']);
         }
 
-        if ($auth['route']) {
+        if (isset($auth['route'])) {
             return redirect()->route($auth['route']);
         }
 
