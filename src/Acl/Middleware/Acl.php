@@ -81,7 +81,7 @@ class Acl
             return redirect()->route($auth['route']);
         }
 
-        return redirect()->route('main.auth');
+        return redirect()->route('main.auth.redirect', 'authsch');
     }
 
     private function parseAcl(Request $request)
