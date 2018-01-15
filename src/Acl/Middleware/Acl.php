@@ -73,6 +73,8 @@ class Acl
             return response('Unauthorized.', 401);
         }
 
+        $request->session()->put('url.intended', $request->getUri());
+
         if (isset($auth['target'])) {
             return redirect()->route('main.auth.redirect', $auth['target']);
         }
