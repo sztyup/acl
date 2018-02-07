@@ -76,14 +76,20 @@ class Acl
         $request->session()->put('url.intended', $request->getUri());
 
         if (isset($auth['target'])) {
-            return redirect()->route('main.auth.redirect', $auth['target']);
+            return redirect()->route('main.auth.redirect', [
+                'provider' => $auth['target'],
+                'from' => $request->getUri()
+            ]);
         }
 
         if (isset($auth['route'])) {
             return redirect()->route($auth['route']);
         }
 
-        return redirect()->route('main.auth.redirect', 'authsch');
+        return redirect()->route('main.auth.redirect', [
+            'provider' => 'authsch',
+            'from' => $request->getUri()
+        ]);
     }
 
     private function parseAcl(Request $request)
