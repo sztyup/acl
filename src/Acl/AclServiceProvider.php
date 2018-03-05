@@ -2,10 +2,10 @@
 
 namespace Sztyup\Acl;
 
-use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
-use Sztyup\Acl\Contracts\HasAcl;
+use Sztyup\Acl\Middleware\Acl;
 
 class AclServiceProvider extends ServiceProvider
 {
@@ -28,6 +28,11 @@ class AclServiceProvider extends ServiceProvider
         ], 'config');
 
         $this->registerBlade();
+
+        /** @var Router $router */
+        $router = $this->app->make('router');
+
+        $router->aliasMiddleware('acl', Acl::class);
     }
 
     /**
