@@ -2,30 +2,29 @@
 
 namespace Sztyup\Acl;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
-use Sztyup\Acl\Contracts\HasAcl;
-use Tree\Builder\NodeBuilderInterface;
-use Tree\Node\NodeInterface;
-use Tree\Node\NodeTrait;
+use Closure;
 
-class Node implements NodeInterface
+class Node
 {
-    use NodeTrait;
-
-    protected $id;
+    /** @var Closure */
     protected $truth;
+
+    /** @var string */
     protected $name;
 
-    public function __construct($name, $truth, $id = 0)
+
+    /** @var Node[] */
+    protected $children;
+
+    /** @var Node */
+    protected $parent;
+
+    public function __construct($name, $truth = null)
     {
-        $this->id = $id;
         $this->name = $name;
         $this->truth = $truth;
-    }
-
-    public function getId(): int
-    {
-        return $this->id;
     }
 
     public function getName(): string
@@ -33,13 +32,58 @@ class Node implements NodeInterface
         return $this->name;
     }
 
+    public function setParent(Node $node)
+    {
+        $this->parent = $node;
+
+        return $this;
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    public function addChildren(Node $node)
+    {
+        $node->setParent($this);
+
+        $this->children[] = $node;
+
+        return $this;
+    }
+
+    public function getChildren()
+    {
+        return $this->children ?? [];
+    }
+
+    public function getAncestors()
+    {
+        $parents = [];
+        $node = $this;
+        while ($parent = $node->getParent()) {
+            if (get_class($parent) != Node::class) {
+                array_unshift($parents, $parent);
+            }
+            $node = $parent;
+        }
+
+        return $parents;
+    }
+
+    public function getAncestorsAndSelf()
+    {
+        return array_merge($this->getAncestors(), [$this]);
+    }
+
     /**
      * It tells whether the current node is given to the user regardless of the persistent state
      *
-     * @param HasAcl $user
+     * @param Authenticatable $user
      * @return bool
      */
-    public function apply(HasAcl $user): bool
+    public function apply(Authenticatable $user): bool
     {
         if (!is_callable($this->truth)) {
             return false;
@@ -48,50 +92,11 @@ class Node implements NodeInterface
         return call_user_func($this->truth, $user);
     }
 
-    /**
-     * Converts an array represantation of permissions into a NodeTree
-     *
-     * @param NodeBuilderInterface $tree
-     * @param $permissions array A recursive array with the permissions
-     * @return NodeBuilderInterface The NodeInterface for the root of the tree
-     */
-    public static function buildTree($tree, array $permissions)
-    {
-        if ($tree == null) {
-            $tree = new NodeBuilder();
-            $top = true;
-        } else {
-            $top = false;
-        }
-
-        foreach ($permissions as $child => $properties) {
-            list($permission, $children) = static::parse($child, $properties);
-
-            self::buildTree(
-                $tree->tree($permission),
-                $children
-            );
-        }
-
-        if ($top) {
-            return $tree;
-        } else {
-            return $tree->end();
-        }
-    }
-
-    protected static function parse($key, $node)
-    {
-        return [
-            new Node('dummy', null),
-            []
-        ];
-    }
-
     protected function filter(Node $root, callable $function, $inherits): Collection
     {
         $result = new Collection();
 
+        /** @var Node $child */
         foreach ($root->getChildren() as $child) {
             if ($function($child)) {
                 $result = $result->merge($inherits ? $child->getAncestorsAndSelf() : $child);
@@ -114,25 +119,6 @@ class Node implements NodeInterface
     public function filterTree(callable $filterFunction, $inherits = true): Collection
     {
         return $this->filter($this, $filterFunction, $inherits);
-    }
-
-    /**
-     * It is overwritten to exclude dummy root
-     *
-     * @return array Ancestors
-     */
-    public function getAncestors()
-    {
-        $parents = [];
-        $node = $this;
-        while ($parent = $node->getParent()) {
-            if (get_class($parent) != Node::class) {
-                array_unshift($parents, $parent);
-            }
-            $node = $parent;
-        }
-
-        return $parents;
     }
 
     public function mapWithKeys(callable $function)
@@ -158,10 +144,10 @@ class Node implements NodeInterface
     /**
      * Gives back all nodes applicable to the given user
      *
-     * @param HasAcl $user The user requesting nodes
+     * @param Authenticatable $user The user requesting nodes
      * @return Collection The applicable nodes
      */
-    public function getNodesByDynamic(HasAcl $user): Collection
+    public function getNodesByDynamic(Authenticatable $user): Collection
     {
         return $this->filterTree(function (Node $node) use ($user) {
             return $node->apply($user);
@@ -170,6 +156,12 @@ class Node implements NodeInterface
 
     public function flatten(): Collection
     {
-        return $this->accept(new TreeVisitor());
+        $collection = new Collection();
+
+        foreach ($this->getChildren() as $child) {
+            $collection = $collection->merge($child->flatten());
+        }
+
+        return $collection;
     }
 }
