@@ -1,16 +1,7 @@
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | User model
-    |--------------------------------------------------------------------------
-    |
-    | Its very important to define the user model here
-    |
-    */
-    'user_model' => \Illuminate\Contracts\Auth\Authenticatable::class,
-
+    'login_page' => '/login',
     /*
     |--------------------------------------------------------------------------
     | Repositories
@@ -21,15 +12,13 @@ return [
     */
     'permission_repository' => \Sztyup\Acl\Contracts\PermissionRepository::class,
     'role_repository' => \Sztyup\Acl\Contracts\RoleRepository::class,
-    'static_role_repository' => \Sztyup\Acl\Contracts\StaticRoleRepository::class,
-    'permission_to_role_repository' => \Sztyup\Acl\Contracts\PermissionToRoleRepository::class,
 
     /*
     |--------------------------------------------------------------------------
-    | Inheritances
+    | Inheritance
     |--------------------------------------------------------------------------
     |
-    | You can enable/disable permission inheritance
+    | You can enable/disable inheritance
     |
     */
     'role_inheritance' => false,
@@ -37,7 +26,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Dynamics
+    | Dynamic
     |--------------------------------------------------------------------------
     |
     | You can enable/disable dynamic role/permission behaviour
