@@ -3,10 +3,11 @@
 namespace Sztyup\Acl\Middleware;
 
 use Closure;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Sztyup\Acl\AclManager;
-use Sztyup\Acl\Contracts\HasAcl;
 use Sztyup\Acl\Exception\NotAuthorizedException;
 
 class Acl
@@ -14,7 +15,7 @@ class Acl
     /** @var AclManager */
     protected $acl;
 
-    /** @var HasAcl */
+    /** @var Authenticatable */
     protected $user;
 
     public function __construct(AclManager $acl)
@@ -22,30 +23,47 @@ class Acl
         $this->acl = $acl;
     }
 
+    /**
+     * @param Request $request
+     * @param Closure $next
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws AuthorizationException
+     */
     public function handle(Request $request, Closure $next)
     {
-        $this->user = $this->getUser($request);
+        if ($user = $request->user()) {
+            $this->acl->setUser($user);
+        }
 
         list($roles, $permissions) = $this->parseAcl($request);
 
-        $required = count($roles) + count($permissions) > 0;
-        $authIsNeeded = $this->parseAuth($request, $required);
+        $aclAction = count($roles) + count($permissions) > 0;
 
-        if ($authIsNeeded) {
-            return $authIsNeeded;
-        };
+        $authAction = $request->route()->getAction('auth');
+
+        if ($authAction == null && $aclAction == 0) { // Auth is not required
+            return $next($request);
+        }
+
+        if (!$user) {
+            return $this->unauthenticated($request, $authAction);
+        }
+
+        if ($aclAction == 0) { // No permission / role required
+            return $next($request);
+        }
 
         $missingRoles = [];
         $missingPermissions = [];
 
         foreach ($roles as $role) {
-            if (!$this->user->hasRole($role)) {
+            if (!$this->acl->hasRole($role)) {
                 $missingRoles[] = $role;
             }
         }
 
         foreach ($permissions as $permission) {
-            if (!$this->user->hasPermission($permission)) {
+            if (!$this->acl->hasPermission($permission)) {
                 $missingPermissions[] = $permission;
             }
         }
@@ -57,18 +75,8 @@ class Acl
         return $next($request);
     }
 
-    private function parseAuth(Request $request, bool $acl)
+    private function unauthenticated(Request $request, $action = [])
     {
-        $auth = $request->route()->getAction('auth');
-
-        if ($auth == null && $acl == false) { // Auth is not required
-            return false;
-        }
-
-        if ($this->user) { // If authenticated we are done
-            return false;
-        }
-
         if ($request->ajax() || $request->wantsJson()) { // Dont redirect json
             return response('Unauthorized.', 401);
         }
@@ -77,19 +85,18 @@ class Acl
 
         if (isset($auth['target'])) {
             return redirect()->route('main.auth.redirect', [
-                'provider' => $auth['target'],
+                'provider' => $action['target'],
                 'from' => $request->getUri()
             ]);
         }
 
         if (isset($auth['route'])) {
-            return redirect()->route($auth['route']);
+            return redirect()->route($action['route']);
         }
 
-        return redirect()->route('main.auth.redirect', [
-            'provider' => 'authsch',
-            'from' => $request->getUri()
-        ]);
+        return redirect()->to(
+            $this->acl->getRedirectUrl()
+        );
     }
 
     private function parseAcl(Request $request)
@@ -100,21 +107,5 @@ class Acl
             Arr::wrap($action['is'] ?? []),
             Arr::wrap($action['can'] ?? [])
         ];
-    }
-
-    private function getUser(Request $request)
-    {
-        $user = $request->user();
-        if ($user == null) {
-            return null;
-        }
-
-        $reflection = new \ReflectionClass($user);
-
-        if (!$reflection->implementsInterface(HasAcl::class)) {
-            throw new \Exception('User doesnt implement Sztyup\Acl\Contracts\UsesAcl interface');
-        }
-
-        return $user;
     }
 }
