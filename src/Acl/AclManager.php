@@ -2,17 +2,16 @@
 
 namespace Sztyup\Acl;
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Sztyup\Acl\Contracts\HasAcl;
+use Illuminate\Config\Repository as Config;
 use Sztyup\Acl\Contracts\PermissionRepository;
-use Sztyup\Acl\Contracts\PermissionToRoleRepository;
 use Sztyup\Acl\Contracts\RoleRepository;
-use Sztyup\Acl\Contracts\StaticRoleRepository;
-use Sztyup\Acl\Exception\InvalidConfigurationException;
-use Sztyup\Acl\Role as RoleNode;
 
 class AclManager
 {
@@ -20,148 +19,186 @@ class AclManager
     const CACHE_KEY_ROLES = '__acl_role_tree';
     const CACHE_KEY_PERMISSIONS = '__acl_permission_tree';
 
-    /** @var \Illuminate\Contracts\Auth\Authenticatable */
-    protected $user;
+    const CACHE_MINUTES = 60 * 24;
 
     /** @var PermissionRepository */
     protected $permissionRepository;
 
-    /**
-     * @var Node Tree of all available permissions
-     */
-    protected $permissionTree;
-
-    /** @var  RoleRepository */
+    /** @var RoleRepository */
     protected $roleRepository;
 
-    /** @var  Node */
-    protected $roleTree;
-
-    /**
-     * @var array Cached mapping of permissions to roles
-     */
-    protected $map;
-
-    /**
-     * @var Repository Cache implementation
-     */
-    protected $cache;
+    /** @var Authenticatable */
+    protected $user;
 
     /** @var Collection */
-    protected $staticRoles;
+    protected $roles;
 
-    /** @var PermissionToRoleRepository */
-    protected $permissionToRoleRepository;
+    /** @var Collection */
+    protected $permissions;
 
-    /**
-     * @var array Configuration
-     */
+    /** @var array Cached mapping of permissions to roles */
+    protected $map;
+
+    /** @var Cache Cache implementation */
+    protected $cache;
+
+    /** @var array Configuration */
     protected $config;
 
-    public function __construct(Guard $guard, Repository $cache, Container $container)
+    /**
+     * AclManager constructor.
+     * @param Guard $guard
+     * @param Cache $cache
+     * @param Container $container
+     * @param Config $config
+     */
+    public function __construct(Guard $guard, Cache $cache, Container $container, Config $config)
     {
         $this->cache = $cache;
-        $this->config = config('acl');
+        $this->config = $config->get('acl');
 
-        $this->permissionRepository = $this->getClass('permission_repository', PermissionRepository::class, $container);
-        $this->permissionToRoleRepository = $this->getClass(
-            'permission_to_role_repository',
-            PermissionToRoleRepository::class,
-            $container
+        $this->permissionRepository = $container->make($this->config['permission_repository']);
+        $this->roleRepository = $container->make($this->config['role_repository']);
+
+        $this->permissions = new Collection();
+        $this->roles = new Collection();
+
+        $this->init();
+    }
+
+    protected function init()
+    {
+        /** @var Role $roleTree */
+        $roleTree = $this->cache->remember(
+            self::CACHE_KEY_ROLES,
+            self::CACHE_MINUTES,
+            function () {
+                return $this->roleRepository->getRolesAsTree();
+            }
         );
-        $this->roleRepository = $this->getClass('role_repository', RoleRepository::class, $container);
-        $staticRepo = $this->getClass('static_role_repository', StaticRoleRepository::class, $container);
-        $this->staticRoles = Collection::make($staticRepo->getRoles());
 
-        $this->parseRoles();
-        $this->parsePermissions();
-        $this->buildMap();
-    }
+        /** @var Permission $permissionTree */
+        $permissionTree = $this->cache->remember(
+            self::CACHE_KEY_PERMISSIONS,
+            self::CACHE_MINUTES,
+            function () {
+                return $this->permissionRepository->getPermissionsAsTree();
+            }
+        );
 
-
-    protected function getClass($config, $interface, Container $container)
-    {
-        $class = $this->config[$config];
-
-        $reflection = new \ReflectionClass($class);
-        if (!$reflection->isSubclassOf($interface)) {
-            throw new InvalidConfigurationException($config);
-        }
-
-        return $container->make($class);
-    }
-
-    protected function parseRoles()
-    {
-        $this->roleTree =  Role::buildTree(
-            null,
-            $this->roleRepository->getRoles()
-        )->getNode();
-    }
-
-    protected function parsePermissions()
-    {
-        $this->permissionTree = Permission::buildTree(
-            null,
-            $this->permissionRepository->getPermissions()
-        )->getNode();
-    }
-
-    protected function buildMap()
-    {
-        $this->map = $this->cache->rememberForever(self::CACHE_KEY_MAP, function () {
-            return $this->staticRoles
-                ->mapWithKeys(function ($role) {
+        $this->map = $this->cache->remember(
+            self::CACHE_KEY_MAP,
+            self::CACHE_MINUTES,
+            function () use ($roleTree, $permissionTree) {
+                return $roleTree->mapWithKeys(function (Role $role) {
                     return [
-                        $role->getName() => $this->permissionToRoleRepository->getPermissionsForRole($role)
+                        $role->getName() => $this->permissionRepository->getPermissionsForRole($role)
                     ];
-                })
-                ->merge(
-                    $this->roleTree->mapWithKeys(function (RoleNode $role) {
-                        return [
-                            $role->getName() => $role->getPermissions()
-                        ];
-                    })
-                )->toArray();
-        });
+                });
+            }
+        );
     }
 
-    public function getPermissionsForUser(HasAcl $user)
+    /**
+     * @param Authenticatable $user
+     * @return $this
+     */
+    public function setUser(Authenticatable $user)
     {
-        $permissions = new Collection();
+        $this->user = $user;
 
-        foreach ($user->getRoles() as $role) {
-            $permissions = $permissions->merge(
-                $this->permissionTree->getNodesByNames($this->map[$role->getName()])
-            );
+        $this->roles = $this->roleRepository->getRolesForUser($user);
+        foreach ($this->roles as $role) {
+            $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
         }
 
-        $permissions = $permissions->merge(
-            $this->permissionTree->getNodesByDynamic($user)
-        );
-
-        return $permissions;
+        return $this;
     }
 
-    public function getDynamicRolesForUser(HasAcl $user): Collection
+    public function getPermissionsForUser(): Collection
     {
-        return $this->roleTree->getNodesByDynamic($user)->toBase();
+        return $this->permissions;
     }
 
-    public function getPermissions()
+    public function getRolesForUser(): Collection
     {
-        return $this->permissionTree->flatten();
+        return $this->roles;
     }
 
-    public function getRoles()
+    /**
+     * @param $permissions
+     * @param bool $all
+     *
+     * @return bool
+     *
+     * @throws AuthenticationException
+     */
+    public function hasPermission($permissions, bool $all = false): bool
     {
-        return $this->roleTree->flatten()->merge($this->staticRoles);
+        if (!$this->user) {
+            throw new AuthenticationException();
+        }
+
+        return $this->hasElementsInCollection($this->permissions, Arr::wrap($permissions), $all);
+    }
+
+    /**
+     * @param $roles
+     * @param bool $all
+     *
+     * @return bool
+     *
+     * @throws AuthenticationException
+     */
+    public function hasRole($roles, bool $all = false): bool
+    {
+        if (!$this->user) {
+            throw new AuthenticationException();
+        }
+
+        return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
+    }
+
+    private function hasElementsInCollection(Collection $collection, array $items, $all)
+    {
+        $items = new Collection($items);
+
+        $collection = $collection->map->getName();
+
+        $result = $items->intersect($collection);
+
+        if ($all && $result->count() == $items->count()) {
+            return true;
+        }
+
+        if (!$all && $result->isNotEmpty()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getRoleRepository()
+    {
+        return $this->roleRepository;
+    }
+
+    public function getPermissionRepository()
+    {
+        return $this->permissionRepository;
     }
 
     public function clearCache()
     {
         $this->cache->forget(self::CACHE_KEY_MAP);
+        $this->cache->forget(self::CACHE_KEY_PERMISSIONS);
+        $this->cache->forget(self::CACHE_KEY_ROLES);
 
-        $this->buildMap();
+        $this->init();
+    }
+
+    public function getRedirectUrl()
+    {
+        return $this->config['login_page'];
     }
 }
