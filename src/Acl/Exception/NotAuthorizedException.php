@@ -2,9 +2,9 @@
 
 namespace Sztyup\Acl\Exception;
 
-use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 
-class NotAuthorizedException extends Exception
+class NotAuthorizedException extends AuthorizationException
 {
     public function __construct($missingRoles = [], $missingPermissions = [])
     {
@@ -18,6 +18,6 @@ class NotAuthorizedException extends Exception
             $message .= 'perm: ' . $permission . "\n";
         }
 
-        parent::__construct($message, 403, null);
+        parent::__construct($message);
     }
 }
