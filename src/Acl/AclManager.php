@@ -17,7 +17,6 @@ class AclManager
 {
     const CACHE_KEY_MAP = '__acl_permission_to_role_mapping';
     const CACHE_KEY_ROLES = '__acl_role_tree';
-    const CACHE_KEY_PERMISSIONS = '__acl_permission_tree';
 
     const CACHE_MINUTES = 60 * 24;
 
@@ -30,10 +29,10 @@ class AclManager
     /** @var Authenticatable */
     protected $user;
 
-    /** @var Collection */
+    /** @var NodeCollection */
     protected $roles;
 
-    /** @var Collection */
+    /** @var NodeCollection */
     protected $permissions;
 
     /** @var array Cached mapping of permissions to roles */
@@ -77,19 +76,10 @@ class AclManager
             }
         );
 
-        /** @var Permission $permissionTree */
-        $permissionTree = $this->cache->remember(
-            self::CACHE_KEY_PERMISSIONS,
-            self::CACHE_MINUTES,
-            function () {
-                return $this->permissionRepository->getPermissionsAsTree();
-            }
-        );
-
         $this->map = $this->cache->remember(
             self::CACHE_KEY_MAP,
             self::CACHE_MINUTES,
-            function () use ($roleTree, $permissionTree) {
+            function () use ($roleTree) {
                 return $roleTree->mapWithKeys(function (Role $role) {
                     return [
                         $role->getName() => $this->permissionRepository->getPermissionsForRole($role)
@@ -107,10 +97,20 @@ class AclManager
     {
         $this->user = $user;
 
+        $this->permissions = NodeCollection::make();
+
         $this->roles = $this->roleRepository->getRolesForUser($user);
         foreach ($this->roles as $role) {
             $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
         }
+
+        $this->permissions->setInheritance(
+            $this->config['permission_inheritance']
+        );
+
+        $this->roles->setInheritance(
+            $this->config['role_inheritance']
+        );
 
         return $this;
     }
@@ -159,11 +159,11 @@ class AclManager
         return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
     }
 
-    private function hasElementsInCollection(Collection $collection, array $items, $all)
+    private function hasElementsInCollection(NodeCollection $collection, array $items, $all)
     {
         $items = new Collection($items);
 
-        $collection = $collection->map->getName();
+        $collection = $collection->withInherited()->map->getName();
 
         $result = $items->intersect($collection);
 
@@ -191,7 +191,6 @@ class AclManager
     public function clearCache()
     {
         $this->cache->forget(self::CACHE_KEY_MAP);
-        $this->cache->forget(self::CACHE_KEY_PERMISSIONS);
         $this->cache->forget(self::CACHE_KEY_ROLES);
 
         $this->init();

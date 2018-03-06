@@ -3,7 +3,6 @@
 namespace Sztyup\Acl;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Collection;
 use Closure;
 
 class Node
@@ -58,6 +57,9 @@ class Node
         return $this->children ?? [];
     }
 
+    /**
+     * @return array
+     */
     public function getAncestors()
     {
         $parents = [];
@@ -92,15 +94,18 @@ class Node
         return call_user_func($this->truth, $user);
     }
 
-    protected function filter(Node $root, callable $function, $inherits): Collection
+    protected function filter(Node $root, callable $function, $inherits): NodeCollection
     {
-        $result = new Collection();
+        $result = new NodeCollection();
+
+        $result->setInheritance($inherits);
 
         /** @var Node $child */
         foreach ($root->getChildren() as $child) {
             if ($function($child)) {
-                $result = $result->merge($inherits ? $child->getAncestorsAndSelf() : $child);
+                $result = $result->merge($child);
             }
+
             $result = $result->merge(
                 $this->filter($child, $function, $inherits)
             );
@@ -114,9 +119,9 @@ class Node
      *
      * @param callable $filterFunction
      * @param bool $inherits
-     * @return Collection
+     * @return NodeCollection
      */
-    public function filterTree(callable $filterFunction, $inherits = true): Collection
+    public function filterTree(callable $filterFunction, $inherits = true): NodeCollection
     {
         return $this->filter($this, $filterFunction, $inherits);
     }
@@ -132,9 +137,9 @@ class Node
      * Returns all node (and theyre accendants if inheritance is enabled) who are listed in the values array
      *
      * @param array $values The nodes matched
-     * @return Collection
+     * @return NodeCollection
      */
-    public function getNodesByNames(array $values): Collection
+    public function getNodesByNames(array $values): NodeCollection
     {
         return $this->filterTree(function (Node $node) use ($values) {
             return in_array($node->getName(), $values);
@@ -145,21 +150,21 @@ class Node
      * Gives back all nodes applicable to the given user
      *
      * @param Authenticatable $user The user requesting nodes
-     * @return Collection The applicable nodes
+     * @return NodeCollection The applicable nodes
      */
-    public function getNodesByDynamic(Authenticatable $user): Collection
+    public function getNodesByDynamic(Authenticatable $user): NodeCollection
     {
         return $this->filterTree(function (Node $node) use ($user) {
             return $node->apply($user);
         });
     }
 
-    public function flatten(): Collection
+    public function flatten($root = true): NodeCollection
     {
-        $collection = new Collection();
+        $collection = new NodeCollection($root ? null : [$this]);
 
         foreach ($this->getChildren() as $child) {
-            $collection = $collection->merge($child->flatten());
+            $collection = $collection->merge($child->flatten(false));
         }
 
         return $collection;
