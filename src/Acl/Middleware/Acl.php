@@ -18,16 +18,14 @@ class Acl
     /** @var Authenticatable */
     protected $user;
 
-    public function __construct(AclManager $acl)
-    {
-        $this->acl = $acl;
-    }
-
     /**
      * @param Request $request
      * @param Closure $next
+     *
      * @return \Symfony\Component\HttpFoundation\Response
-     * @throws AuthorizationException
+     *
+     * @throws NotAuthorizedException
+     * @throws \Illuminate\Auth\AuthenticationException
      */
     public function handle(Request $request, Closure $next)
     {
@@ -75,6 +73,11 @@ class Acl
         return $next($request);
     }
 
+    public function __construct(AclManager $acl)
+    {
+        $this->acl = $acl;
+    }
+
     private function unauthenticated(Request $request, $action = [])
     {
         if ($request->ajax() || $request->wantsJson()) { // Dont redirect json
@@ -83,15 +86,19 @@ class Acl
 
         $request->session()->put('url.intended', $request->getUri());
 
-        if (isset($auth['target'])) {
+        if (isset($action['provider'])) {
             return redirect()->route('main.auth.redirect', [
-                'provider' => $action['target'],
+                'provider' => $action['provider'],
                 'from' => $request->getUri()
             ]);
         }
 
-        if (isset($auth['route'])) {
+        if (isset($action['route'])) {
             return redirect()->route($action['route']);
+        }
+
+        if (isset($action['target'])) {
+            return redirect()->to($action['target']);
         }
 
         return redirect()->to(
