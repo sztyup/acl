@@ -20,6 +20,12 @@ interface RoleRepository
     public function getRolesAsTree(): Node;
 
     /**
+     * @param string $name
+     * @return Role
+     */
+    public function getRoleByName(string $name);
+
+    /**
      * @param Authenticatable $user
      * @return Collection
      */
@@ -36,4 +42,14 @@ interface RoleRepository
      * @param Authenticatable $user
      */
     public function removeRoleFromUser($role, Authenticatable $user);
+
+    /**
+     * @param Role|string $role
+     */
+    public function addRole(Role $role);
+
+    /**
+     * @param Role|string $role
+     */
+    public function removeRole($role);
 }

@@ -20,6 +20,12 @@ interface PermissionRepository
     public function getPermissionsAsTree(): Node;
 
     /**
+     * @param string $name
+     * @return Permission
+     */
+    public function getPermissionByName(string $name);
+
+    /**
      * @param Role $role
      * @return Collection
      */
@@ -36,4 +42,14 @@ interface PermissionRepository
      * @param Role $role
      */
     public function removePermissionFromRole($permission, Role $role);
+
+    /**
+     * @param Permission|string $permission
+     */
+    public function addPermission($permission);
+
+    /**
+     * @param Permission|string $permission
+     */
+    public function removePermission($permission);
 }
