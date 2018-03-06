@@ -101,7 +101,6 @@ class AclManager
 
         $this->roles = $this->roleRepository->getRolesForUser($user);
 
-
         if ($this->config['dynamic_roles']) {
             $this->roles = $this->roles->merge(
                 $this->roleRepository->getRolesAsTree()->getNodesByDynamic($user)

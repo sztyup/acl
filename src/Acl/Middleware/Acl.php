@@ -3,7 +3,6 @@
 namespace Sztyup\Acl\Middleware;
 
 use Closure;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
