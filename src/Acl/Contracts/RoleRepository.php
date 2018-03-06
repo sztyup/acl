@@ -3,16 +3,16 @@
 namespace Sztyup\Acl\Contracts;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Collection;
 use Sztyup\Acl\Node;
+use Sztyup\Acl\NodeCollection;
 use Sztyup\Acl\Role;
 
 interface RoleRepository
 {
     /**
-     * @return Collection
+     * @return NodeCollection
      */
-    public function getRoles(): Collection;
+    public function getRoles(): NodeCollection;
 
     /**
      * @return Node
@@ -27,9 +27,9 @@ interface RoleRepository
 
     /**
      * @param Authenticatable $user
-     * @return Collection
+     * @return NodeCollection
      */
-    public function getRolesForUser(Authenticatable $user): Collection;
+    public function getRolesForUser(Authenticatable $user): NodeCollection;
 
     /**
      * @param $role string|Role

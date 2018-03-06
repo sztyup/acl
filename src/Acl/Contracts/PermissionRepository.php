@@ -2,17 +2,17 @@
 
 namespace Sztyup\Acl\Contracts;
 
-use Illuminate\Support\Collection;
 use Sztyup\Acl\Node;
+use Sztyup\Acl\NodeCollection;
 use Sztyup\Acl\Permission;
 use Sztyup\Acl\Role;
 
 interface PermissionRepository
 {
     /**
-     * @return Collection
+     * @return NodeCollection
      */
-    public function getPermissions(): Collection;
+    public function getPermissions(): NodeCollection;
 
     /**
      * @return Node
@@ -27,9 +27,9 @@ interface PermissionRepository
 
     /**
      * @param Role $role
-     * @return Collection
+     * @return NodeCollection
      */
-    public function getPermissionsForRole(Role $role): Collection;
+    public function getPermissionsForRole(Role $role): NodeCollection;
 
     /**
      * @param Permission|string $permission
