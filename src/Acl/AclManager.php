@@ -59,8 +59,8 @@ class AclManager
         $this->permissionRepository = $container->make($this->config['permission_repository']);
         $this->roleRepository = $container->make($this->config['role_repository']);
 
-        $this->permissions = new Collection();
-        $this->roles = new Collection();
+        $this->permissions = new NodeCollection();
+        $this->roles = new NodeCollection();
 
         $this->init();
     }
@@ -100,16 +100,30 @@ class AclManager
         $this->permissions = NodeCollection::make();
 
         $this->roles = $this->roleRepository->getRolesForUser($user);
-        foreach ($this->roles as $role) {
+
+
+        if ($this->config['dynamic_roles']) {
+            $this->roles = $this->roles->merge(
+                $this->roleRepository->getRolesAsTree()->getNodesByDynamic($user)
+            );
+        }
+
+        $this->roles->setInheritance(
+            $this->config['role_inheritance']
+        );
+
+        foreach ($this->roles->withInherited() as $role) {
             $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
+        }
+
+        if ($this->config['dynamic_permissions']) {
+            $this->permissions = $this->permissions->merge(
+                $this->permissionRepository->getPermissionsAsTree()->getNodesByDynamic($user)
+            );
         }
 
         $this->permissions->setInheritance(
             $this->config['permission_inheritance']
-        );
-
-        $this->roles->setInheritance(
-            $this->config['role_inheritance']
         );
 
         return $this;
