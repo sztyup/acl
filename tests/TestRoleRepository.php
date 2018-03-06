@@ -23,9 +23,7 @@ class TestRoleRepository implements RoleRepository
     {
         $this->roles = Collection::make([
             new Role('foo'),
-            new Role('bar', 'Bar', 'Bar role', function (Authenticatable $user) {
-                return $user->getAuthIdentifier() == 1;
-            })
+            new Role('bar', 'Bar', 'Bar role')
         ]);
     }
 
