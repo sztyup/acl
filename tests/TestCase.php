@@ -31,7 +31,7 @@ class TestCase extends Base
             'middleware' => ['web', 'acl']
         ], function ($router) {
             $router->get('asd', [
-                'can' => 'perm1',
+                'can' => 'admin-foo',
                 'uses' => function () {
                     return response('asd');
                 }
