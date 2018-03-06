@@ -19,20 +19,12 @@ class TestRoleRepository implements RoleRepository
      */
     private $roles;
 
-    public function __construct()
-    {
-        $this->roles = Collection::make([
-            new Role('foo'),
-            new Role('bar', 'Bar', 'Bar role')
-        ]);
-    }
-
     /**
      * @return NodeCollection|Role[]
      */
     public function getRoles(): NodeCollection
     {
-        return NodeCollection::make($this->roles);
+        return $this->getRolesAsTree()->flatten();
     }
 
     /**
@@ -98,11 +90,20 @@ class TestRoleRepository implements RoleRepository
         }
     }
 
+    /**
+     * @return Node
+     */
     public function getRolesAsTree(): Node
     {
         $root = new Node('dummy');
 
-        foreach ($this->roles as $role) {
+        $root->addChildren(
+            (new Role('foo'))->addChildren(
+                new Role('bar', 'Bar', 'Bar role')
+            )
+        );
+
+        foreach ($this->roles ?? [] as $role) {
             $root->addChildren($role);
         }
 
