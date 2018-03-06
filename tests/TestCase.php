@@ -37,6 +37,13 @@ class TestCase extends Base
                     return response('asd');
                 }
             ]);
+
+            $router->get('foo', [
+                'auth' => ['target' => '/logintester'],
+                'uses' => function () {
+                    return response('foo');
+                }
+            ]);
         });
     }
 }
