@@ -23,6 +23,7 @@ class TestCase extends Base
 
         $config->set('acl.role_repository', TestRoleRepository::class);
         $config->set('acl.permission_repository', TestPermissionRepository::class);
+        $config->set('acl.role_inheritance', true);
 
         /** @var Router $router */
         $router = $this->app->make('router');

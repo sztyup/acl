@@ -61,4 +61,21 @@ class MapTest extends TestCase
         // Test inherited permission given
         $this->assertTrue($manager->hasPermission('admin'));
     }
+
+    /**
+     * @throws \Illuminate\Auth\AuthenticationException
+     */
+    public function testRoleInheritance()
+    {
+        /** @var AclManager $manager */
+        $manager = $this->app->make(AclManager::class);
+        $user = new FakeUser(1, 'Sztyup');
+
+        $manager->getRoleRepository()->addRoleToUser('bar', $user);
+
+        $manager->setUser($user);
+
+        $this->assertTrue($manager->hasRole('foo'));
+        $this->assertTrue($manager->hasPermission('admin-foo'));
+    }
 }
