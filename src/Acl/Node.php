@@ -103,7 +103,7 @@ class Node
         /** @var Node $child */
         foreach ($root->getChildren() as $child) {
             if ($function($child)) {
-                $result = $result->merge($child);
+                $result = $result->merge([$child]);
             }
 
             $result = $result->merge(
