@@ -128,13 +128,24 @@ class AclManager
         return $this;
     }
 
+    protected function checkInitialized()
+    {
+        if (is_null($this->user)) {
+            throw new AuthenticationException('AclManager not initialized');
+        }
+    }
+
     public function getPermissionsForUser(): Collection
     {
+        $this->checkInitialized();
+
         return $this->permissions;
     }
 
     public function getRolesForUser(): Collection
     {
+        $this->checkInitialized();
+
         return $this->roles;
     }
 
@@ -148,9 +159,7 @@ class AclManager
      */
     public function hasPermission($permissions, bool $all = false): bool
     {
-        if (!$this->user) {
-            throw new AuthenticationException();
-        }
+        $this->checkInitialized();
 
         return $this->hasElementsInCollection($this->permissions, Arr::wrap($permissions), $all);
     }
@@ -165,9 +174,7 @@ class AclManager
      */
     public function hasRole($roles, bool $all = false): bool
     {
-        if (!$this->user) {
-            throw new AuthenticationException();
-        }
+        $this->checkInitialized();
 
         return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
     }
