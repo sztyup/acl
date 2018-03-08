@@ -41,4 +41,26 @@ class DynamicTest extends TestCase
         $this->assertFalse($manager->hasRole('dynamic1'));
         $this->assertTrue($manager->hasRole('dynamic2'));
     }
+
+    /**
+     * @throws \Illuminate\Auth\AuthenticationException
+     */
+    public function testPermission()
+    {
+        $user1 = new FakeUser(1, '1');
+        $user2 = new FakeUser(2, '2');
+
+        /** @var AclManager $manager */
+        $manager = $this->app->make(AclManager::class);
+
+        $manager->setUser($user1);
+
+        $this->assertTrue($manager->hasPermission('dynamic1'));
+        $this->assertFalse($manager->hasPermission('dynamic2'));
+
+        $manager->setUser($user2);
+
+        $this->assertFalse($manager->hasPermission('dynamic1'));
+        $this->assertTrue($manager->hasPermission('dynamic2'));
+    }
 }

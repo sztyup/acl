@@ -12,6 +12,8 @@ class InternalTest extends TestCase
         $manager = $this->app->make(AclManager::class);
 
         $this->assertSame([
+                'dynamic1',
+                'dynamic2',
                 'admin',
                 'admin-foo',
                 'admin-foo-lol',

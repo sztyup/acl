@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Sztyup\Acl\Contracts\PermissionRepository;
 use Sztyup\Acl\Node;
@@ -37,6 +38,18 @@ class TestPermissionRepository implements PermissionRepository
     private function getter()
     {
         return [
+            'dynamic1' => [
+                'Dynamic permission',
+                function (Authenticatable $user) {
+                    return $user->getAuthIdentifier() == 1;
+                }
+            ],
+            'dynamic2' => [
+                'Dynamic permission',
+                function (Authenticatable $user) {
+                    return $user->getAuthIdentifier() == 2;
+                }
+            ],
             'admin' => [
                 'Hozzáfér az admin felülethez',
                 [
