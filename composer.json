@@ -1,7 +1,7 @@
 {
   "name": "sztyup/acl",
   "description": "Light-weight role-based permissions for Laravel 5 with a great degree of customization",
-  "license": "MIT",
+  "license": "LGPL-3.0",
   "keywords": [
     "laravel",
     "permissions",
