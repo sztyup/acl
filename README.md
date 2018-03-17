@@ -6,3 +6,11 @@
 [![License](https://poser.pugx.org/sztyup/nexus/license)](https://packagist.org/packages/sztyup/nexus)
 
 Easy to use roles/permissions package with a great degree of customization
+
+### Installation
+
+Composer is the required way to install this package: 
+
+    composer require sztyup/acl
+    
+If you use Laravel 5.5 or above, then the package is automatically discovered.
