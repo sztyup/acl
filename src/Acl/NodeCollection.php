@@ -11,6 +11,8 @@ class NodeCollection extends Collection
     public function setInheritance(bool $inherits)
     {
         $this->inheritance = $inherits;
+
+        return $this;
     }
 
     public function isInheritanceEnabled()
