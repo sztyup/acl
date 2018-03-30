@@ -100,9 +100,12 @@ class Acl
             return redirect()->to($action['target']);
         }
 
-        return redirect()->to(
-            $this->acl->getRedirectUrl()
-        );
+        $url = $this->acl->getRedirectUrl();
+        if (is_array($url)) {
+            return redirect()->route($url[0], $url[1] ?? [], $url[2] ?? 302);
+        }
+
+        return redirect()->to($url);
     }
 
     private function parseAcl(Request $request)
