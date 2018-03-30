@@ -198,6 +198,16 @@ class AclManager
         return false;
     }
 
+    public function getRoleRepository()
+    {
+        return $this->roleRepository;
+    }
+
+    public function getPermissionRepository()
+    {
+        return $this->permissionRepository;
+    }
+
     public function clearCache()
     {
         $this->cache->forget(self::CACHE_KEY_MAP);
