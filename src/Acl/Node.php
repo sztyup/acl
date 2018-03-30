@@ -58,7 +58,7 @@ class Node
     }
 
     /**
-     * @return array
+     * @return array|Node[]
      */
     public function getAncestors()
     {
@@ -74,6 +74,9 @@ class Node
         return $parents;
     }
 
+    /**
+     * @return array|Node[]
+     */
     public function getAncestorsAndSelf()
     {
         return array_merge($this->getAncestors(), [$this]);
@@ -94,6 +97,12 @@ class Node
         return call_user_func($this->truth, $user);
     }
 
+    /**
+     * @param Node $root
+     * @param callable $function
+     * @param $inherits
+     * @return NodeCollection|Node[]
+     */
     protected function filter(Node $root, callable $function, $inherits): NodeCollection
     {
         $result = new NodeCollection();
@@ -119,7 +128,7 @@ class Node
      *
      * @param callable $filterFunction
      * @param bool $inherits
-     * @return NodeCollection
+     * @return NodeCollection|Node[]
      */
     public function filterTree(callable $filterFunction, $inherits = true): NodeCollection
     {
@@ -137,7 +146,7 @@ class Node
      * Returns all node (and theyre accendants if inheritance is enabled) who are listed in the values array
      *
      * @param array $values The nodes matched
-     * @return NodeCollection
+     * @return NodeCollection|Node[]
      */
     public function getNodesByNames(array $values): NodeCollection
     {
@@ -150,7 +159,7 @@ class Node
      * Gives back all nodes applicable to the given user
      *
      * @param Authenticatable $user The user requesting nodes
-     * @return NodeCollection The applicable nodes
+     * @return NodeCollection|Node[] The applicable nodes
      */
     public function getNodesByDynamic(Authenticatable $user): NodeCollection
     {
