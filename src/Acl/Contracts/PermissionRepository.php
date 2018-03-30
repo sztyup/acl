@@ -30,26 +30,4 @@ interface PermissionRepository
      * @return NodeCollection
      */
     public function getPermissionsForRole(Role $role): NodeCollection;
-
-    /**
-     * @param Permission|string $permission
-     * @param Role $role
-     */
-    public function addPermissionToRole($permission, Role $role);
-
-    /**
-     * @param Permission|string $permission
-     * @param Role $role
-     */
-    public function removePermissionFromRole($permission, Role $role);
-
-    /**
-     * @param Permission|string $permission
-     */
-    public function addPermission($permission);
-
-    /**
-     * @param Permission|string $permission
-     */
-    public function removePermission($permission);
 }
