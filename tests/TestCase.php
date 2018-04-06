@@ -14,16 +14,19 @@ class TestCase extends Base
         return [AclServiceProvider::class];
     }
 
-    protected function setUp()
+    protected function getEnvironmentSetUp($app)
     {
-        $this->refreshApplication();
-
         /** @var Repository $config */
-        $config = $this->app->make('config');
+        $config = $app->make('config');
 
         $config->set('acl.role_repository', TestRoleRepository::class);
         $config->set('acl.permission_repository', TestPermissionRepository::class);
         $config->set('acl.role_inheritance', true);
+    }
+
+    protected function setUp()
+    {
+        $this->refreshApplication();
 
         /** @var Router $router */
         $router = $this->app->make('router');
