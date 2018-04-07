@@ -68,13 +68,7 @@ class AclManager
     protected function init()
     {
         /** @var Role $roleTree */
-        $roleTree = $this->cache->remember(
-            self::CACHE_KEY_ROLES,
-            self::CACHE_MINUTES,
-            function () {
-                return $this->roleRepository->getRolesAsTree();
-            }
-        );
+        $roleTree = $this->roleRepository->getRolesAsTree();
 
         $this->map = $this->cache->remember(
             self::CACHE_KEY_MAP,
