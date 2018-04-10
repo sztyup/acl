@@ -70,17 +70,11 @@ class AclManager
         /** @var Role $roleTree */
         $roleTree = $this->roleRepository->getRolesAsTree();
 
-        $this->map = $this->cache->remember(
-            self::CACHE_KEY_MAP,
-            self::CACHE_MINUTES,
-            function () use ($roleTree) {
-                return $roleTree->mapWithKeys(function (Role $role) {
-                    return [
-                        $role->getName() => $this->permissionRepository->getPermissionsForRole($role)
-                    ];
-                });
-            }
-        );
+        $this->map = $roleTree->mapWithKeys(function (Role $role) {
+            return [
+                $role->getName() => $this->permissionRepository->getPermissionsForRole($role)
+            ];
+        });
     }
 
     /**
