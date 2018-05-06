@@ -38,7 +38,7 @@ class Acl
 
         $authAction = $request->route()->getAction('auth');
 
-        if ($authAction == null && $aclAction == 0) { // Auth is not required
+        if ($authAction === null && $aclAction == 0) { // Auth is not required
             return $next($request);
         }
 
