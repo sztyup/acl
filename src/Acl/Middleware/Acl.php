@@ -3,6 +3,7 @@
 namespace Sztyup\Acl\Middleware;
 
 use Closure;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -43,7 +44,7 @@ class Acl
         }
 
         if (!$user) {
-            return $this->unauthenticated($request, $authAction);
+            throw new AuthenticationException();
         }
 
         if ($aclAction == 0) { // No permission / role required
@@ -75,37 +76,6 @@ class Acl
     public function __construct(AclManager $acl)
     {
         $this->acl = $acl;
-    }
-
-    private function unauthenticated(Request $request, $action = [])
-    {
-        if ($request->ajax() || $request->wantsJson()) { // Dont redirect json
-            return response('Unauthorized.', 401);
-        }
-
-        $request->session()->put('url.intended', $request->getUri());
-
-        if (isset($action['provider'])) {
-            return redirect()->route('main.auth.redirect', [
-                'provider' => $action['provider'],
-                'from' => $request->getUri()
-            ]);
-        }
-
-        if (isset($action['route'])) {
-            return redirect()->route($action['route']);
-        }
-
-        if (isset($action['target'])) {
-            return redirect()->to($action['target']);
-        }
-
-        $url = $this->acl->getRedirectUrl();
-        if (is_array($url)) {
-            return redirect()->route($url[0], $url[1] ?? [], $url[2] ?? 302);
-        }
-
-        return redirect()->to($url);
     }
 
     private function parseAcl(Request $request)
