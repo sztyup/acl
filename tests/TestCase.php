@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Router;
 use Orchestra\Testbench\TestCase as Base;
 use Sztyup\Acl\AclServiceProvider;
@@ -30,6 +31,10 @@ class TestCase extends Base
 
         /** @var Router $router */
         $router = $this->app->make('router');
+
+        $router->get('login', function () {
+            return new RedirectResponse('/login');
+        })->name('login');
 
         $router->group([
             'middleware' => ['web', 'acl']

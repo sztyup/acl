@@ -46,20 +46,4 @@ class RoutingTest extends TestCase
 
         $manager->hasPermission('frontend');
     }
-
-    public function testExplicitAuth()
-    {
-        $this
-            ->get('/foo')
-            ->assertRedirect('/logintester')
-        ;
-
-        $user = new FakeUser(1, 'Sztyup');
-
-        $this->actingAs($user)
-            ->get('/foo')
-            ->assertSuccessful()
-            ->assertSee('foo')
-        ;
-    }
 }
