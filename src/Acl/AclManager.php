@@ -116,6 +116,10 @@ class AclManager
         return $this;
     }
 
+    /**
+     * This exception usally means that the AclManager is used too early in the laravel boot process
+     * @throws AuthenticationException
+     */
     protected function checkInitialized()
     {
         if (is_null($this->user)) {
@@ -123,6 +127,10 @@ class AclManager
         }
     }
 
+    /**
+     * @return Collection
+     * @throws AuthenticationException
+     */
     public function getPermissionsForUser(): Collection
     {
         $this->checkInitialized();
@@ -130,6 +138,10 @@ class AclManager
         return $this->permissions;
     }
 
+    /**
+     * @return Collection
+     * @throws AuthenticationException
+     */
     public function getRolesForUser(): Collection
     {
         $this->checkInitialized();
