@@ -18,6 +18,11 @@ class Acl
     /** @var Authenticatable */
     protected $user;
 
+    public function __construct(AclManager $acl)
+    {
+        $this->acl = $acl;
+    }
+
     /**
      * @param Request $request
      * @param Closure $next
@@ -71,11 +76,6 @@ class Acl
         }
 
         return $next($request);
-    }
-
-    public function __construct(AclManager $acl)
-    {
-        $this->acl = $acl;
     }
 
     private function parseAcl(Request $request)
