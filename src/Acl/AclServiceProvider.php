@@ -28,7 +28,9 @@ class AclServiceProvider extends ServiceProvider
             __DIR__ . '/../config/acl.php' => config_path('acl.php'),
         ], 'config');
 
-        $this->registerBlade();
+        if (!$this->app->runningInConsole()) {
+            $this->registerBlade();
+        }
 
         /** @var Router $router */
         $router = $this->app->make('router');
