@@ -34,9 +34,9 @@ class Acl
      */
     public function handle(Request $request, Closure $next)
     {
-        if ($user = $request->user()) {
-            $this->acl->setUser($user);
-        }
+        $user = $request->user();
+
+        $this->acl->setUser($user);
 
         list($roles, $permissions) = $this->parseAcl($request);
 

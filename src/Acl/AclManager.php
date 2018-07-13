@@ -44,6 +44,9 @@ class AclManager
     /** @var array Configuration */
     protected $config;
 
+    /** @var boolean */
+    protected $booted;
+
     /**
      * AclManager constructor.
      * @param Guard $guard
@@ -81,37 +84,43 @@ class AclManager
      * @param Authenticatable $user
      * @return $this
      */
-    public function setUser(Authenticatable $user)
+    public function setUser(?Authenticatable $user)
     {
+        $this->booted = true;
+
         $this->user = $user;
 
         $this->permissions = NodeCollection::make();
 
-        $this->roles = $this->roleRepository->getRolesForUser($user);
+        if ($user) {
+            $this->roles = $this->roleRepository->getRolesForUser($user);
 
-        if ($this->config['dynamic_roles']) {
-            $this->roles = $this->roles->merge(
-                $this->roleRepository->getRolesAsTree()->getNodesByDynamic($user)
+            if ($this->config['dynamic_roles']) {
+                $this->roles = $this->roles->merge(
+                    $this->roleRepository->getRolesAsTree()->getNodesByDynamic($user)
+                );
+            }
+
+            $this->roles->setInheritance(
+                $this->config['role_inheritance']
             );
-        }
 
-        $this->roles->setInheritance(
-            $this->config['role_inheritance']
-        );
+            foreach ($this->roles->withInherited() as $role) {
+                $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
+            }
 
-        foreach ($this->roles->withInherited() as $role) {
-            $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
-        }
+            if ($this->config['dynamic_permissions']) {
+                $this->permissions = $this->permissions->merge(
+                    $this->permissionRepository->getPermissionsAsTree()->getNodesByDynamic($user)
+                );
+            }
 
-        if ($this->config['dynamic_permissions']) {
-            $this->permissions = $this->permissions->merge(
-                $this->permissionRepository->getPermissionsAsTree()->getNodesByDynamic($user)
+            $this->permissions->setInheritance(
+                $this->config['permission_inheritance']
             );
+        } else {
+            $this->roles = NodeCollection::make();
         }
-
-        $this->permissions->setInheritance(
-            $this->config['permission_inheritance']
-        );
 
         return $this;
     }
@@ -122,7 +131,7 @@ class AclManager
      */
     protected function checkInitialized()
     {
-        if (is_null($this->user)) {
+        if (!$this->booted) {
             throw new AuthenticationException('AclManager not initialized');
         }
     }
