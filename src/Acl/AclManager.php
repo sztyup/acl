@@ -142,18 +142,21 @@ class AclManager
      */
     public function getPermissionsForUser(): Collection
     {
-        $this->checkInitialized();
+        if (!$this->booted) {
+            return Collection::make();
+        }
 
         return $this->permissions;
     }
 
     /**
      * @return Collection
-     * @throws AuthenticationException
      */
     public function getRolesForUser(): Collection
     {
-        $this->checkInitialized();
+        if (!$this->booted) {
+            return Collection::make();
+        }
 
         return $this->roles;
     }
@@ -163,12 +166,12 @@ class AclManager
      * @param bool $all
      *
      * @return bool
-     *
-     * @throws AuthenticationException
      */
     public function hasPermission($permissions, bool $all = false): bool
     {
-        $this->checkInitialized();
+        if (!$this->booted) {
+            return false;
+        }
 
         return $this->hasElementsInCollection($this->permissions, Arr::wrap($permissions), $all);
     }
@@ -178,12 +181,12 @@ class AclManager
      * @param bool $all
      *
      * @return bool
-     *
-     * @throws AuthenticationException
      */
     public function hasRole($roles, bool $all = false): bool
     {
-        $this->checkInitialized();
+        if (!$this->booted) {
+            return false;
+        }
 
         return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
     }
