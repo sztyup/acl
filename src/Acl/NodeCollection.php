@@ -20,6 +20,9 @@ class NodeCollection extends Collection
         return $this->inheritance;
     }
 
+    /**
+     * @return NodeCollection
+     */
     public function withInherited()
     {
         if (!$this->inheritance) {

@@ -33,17 +33,4 @@ class RoutingTest extends TestCase
             ->assertSuccessful()
         ;
     }
-
-    /**
-     * @throws AuthenticationException
-     */
-    public function testUnauthenticated()
-    {
-        /** @var AclManager $manager */
-        $manager = $this->app->make(AclManager::class);
-
-        $this->expectException(AuthenticationException::class);
-
-        $manager->hasPermission('frontend');
-    }
 }

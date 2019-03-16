@@ -106,7 +106,7 @@ class AclManager
             );
 
             foreach ($this->roles->withInherited() as $role) {
-                $this->permissions = $this->permissions->merge($this->permissionRepository->getPermissionsForRole($role));
+                $this->permissions = $this->permissions->merge($this->map[$role->getName()] ?? []);
             }
 
             if ($this->config['dynamic_permissions']) {
@@ -138,7 +138,6 @@ class AclManager
 
     /**
      * @return Collection
-     * @throws AuthenticationException
      */
     public function getPermissionsForUser(): Collection
     {
@@ -231,5 +230,10 @@ class AclManager
     public function getRedirectUrl()
     {
         return $this->config['login_page'];
+    }
+
+    public function getMap()
+    {
+        return $this->map;
     }
 }
