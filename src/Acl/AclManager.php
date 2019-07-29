@@ -32,13 +32,13 @@ class AclManager
     /** @var NodeCollection */
     protected $roles;
 
-    /** @var string[] */
+    /** @var string[]|Collection */
     protected $roleNames;
 
     /** @var NodeCollection */
     protected $permissions;
 
-    /** @var string[] */
+    /** @var string[]|Collection */
     protected $permissionNames;
 
     /** @var array Cached mapping of permissions to roles */
@@ -218,7 +218,7 @@ class AclManager
             return false;
         }
 
-        return $this->hasElementsInCollection($this->permissions, Arr::wrap($permissions), $all);
+        return $this->hasElementsInCollection($this->permissionNames, Arr::wrap($permissions), $all);
     }
 
     /**
@@ -233,14 +233,12 @@ class AclManager
             return false;
         }
 
-        return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
+        return $this->hasElementsInCollection($this->roleNames, Arr::wrap($roles), $all);
     }
 
-    private function hasElementsInCollection(NodeCollection $collection, array $items, $all): bool
+    private function hasElementsInCollection(Collection $collection, array $items, $all): bool
     {
         $items = Collection::wrap($items);
-
-        $collection = $collection->withInherited()->map->getName();
 
         $result = $items->intersect($collection);
 
