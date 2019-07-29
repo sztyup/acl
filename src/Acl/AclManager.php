@@ -4,7 +4,6 @@ namespace Sztyup\Acl;
 
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Arr;
@@ -12,13 +11,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Config\Repository as Config;
 use Sztyup\Acl\Contracts\PermissionRepository;
 use Sztyup\Acl\Contracts\RoleRepository;
+use Sztyup\Acl\Exception\NotAuthorizedException;
 
 class AclManager
 {
-    const CACHE_KEY_MAP = '__acl_permission_to_role_mapping';
-    const CACHE_KEY_ROLES = '__acl_role_tree';
+    private const CACHE_KEY_MAP = '__acl_permission_to_role_mapping';
+    private const CACHE_KEY_ROLES = '__acl_role_tree';
 
-    const CACHE_MINUTES = 60 * 24;
+    private const CACHE_MINUTES = 60 * 24;
 
     /** @var PermissionRepository */
     protected $permissionRepository;
@@ -32,8 +32,14 @@ class AclManager
     /** @var NodeCollection */
     protected $roles;
 
+    /** @var string[] */
+    protected $roleNames;
+
     /** @var NodeCollection */
     protected $permissions;
+
+    /** @var string[] */
+    protected $permissionNames;
 
     /** @var array Cached mapping of permissions to roles */
     protected $map;
@@ -49,12 +55,11 @@ class AclManager
 
     /**
      * AclManager constructor.
-     * @param Guard $guard
      * @param Cache $cache
      * @param Container $container
      * @param Config $config
      */
-    public function __construct(Guard $guard, Cache $cache, Container $container, Config $config)
+    public function __construct(Cache $cache, Container $container, Config $config)
     {
         $this->cache = $cache;
         $this->config = $config->get('acl');
@@ -68,7 +73,7 @@ class AclManager
         $this->init();
     }
 
-    protected function init()
+    protected function init(): void
     {
         /** @var Role $roleTree */
         $roleTree = $this->roleRepository->getRolesAsTree();
@@ -84,7 +89,7 @@ class AclManager
      * @param Authenticatable $user
      * @return $this
      */
-    public function setUser(?Authenticatable $user)
+    public function setUser(?Authenticatable $user): self
     {
         $this->booted = true;
 
@@ -122,6 +127,9 @@ class AclManager
             $this->roles = NodeCollection::make();
         }
 
+        $this->permissionNames = $this->permissions->withInherited()->map->getName();
+        $this->roleNames = $this->roles->withInherited()->map->getName();
+
         return $this;
     }
 
@@ -129,7 +137,7 @@ class AclManager
      * This exception usally means that the AclManager is used too early in the laravel boot process
      * @throws AuthenticationException
      */
-    protected function checkInitialized()
+    protected function checkInitialized(): void
     {
         if (!$this->booted) {
             throw new AuthenticationException('AclManager not initialized');
@@ -164,6 +172,44 @@ class AclManager
      * @param $permissions
      * @param bool $all
      *
+     * @throws NotAuthorizedException
+     */
+    public function requirePermission($permissions, bool $all = false): void
+    {
+        foreach ($permissions as $permission) {
+            if (!$this->hasPermission($permission)) {
+                $missingPermissions[] = $permission;
+            }
+        }
+
+        if (!empty($missingPermissions)) {
+            throw new NotAuthorizedException([], $missingPermissions);
+        }
+    }
+
+    /**
+     * @param $roles
+     * @param bool $all
+     *
+     * @throws NotAuthorizedException
+     */
+    public function requireRoles($roles, bool $all = false): void
+    {
+        foreach ($roles as $role) {
+            if (!$this->hasRole($role)) {
+                $missingRoles[] = $role;
+            }
+        }
+
+        if (!empty($missingRoles)) {
+            throw new NotAuthorizedException([], $missingRoles);
+        }
+    }
+
+    /**
+     * @param $permissions
+     * @param bool $all
+     *
      * @return bool
      */
     public function hasPermission($permissions, bool $all = false): bool
@@ -190,15 +236,15 @@ class AclManager
         return $this->hasElementsInCollection($this->roles, Arr::wrap($roles), $all);
     }
 
-    private function hasElementsInCollection(NodeCollection $collection, array $items, $all)
+    private function hasElementsInCollection(NodeCollection $collection, array $items, $all): bool
     {
-        $items = new Collection($items);
+        $items = Collection::wrap($items);
 
         $collection = $collection->withInherited()->map->getName();
 
         $result = $items->intersect($collection);
 
-        if ($all && $result->count() == $items->count()) {
+        if ($all && $result->count() === $items->count()) {
             return true;
         }
 
@@ -219,7 +265,7 @@ class AclManager
         return $this->permissionRepository;
     }
 
-    public function clearCache()
+    public function clearCache(): void
     {
         $this->cache->forget(self::CACHE_KEY_MAP);
         $this->cache->forget(self::CACHE_KEY_ROLES);
@@ -232,7 +278,7 @@ class AclManager
         return $this->config['login_page'];
     }
 
-    public function getMap()
+    public function getMap(): array
     {
         return $this->map;
     }
