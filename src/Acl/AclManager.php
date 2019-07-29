@@ -82,7 +82,7 @@ class AclManager
             return [
                 $role->getName() => $this->permissionRepository->getPermissionsForRole($role)
             ];
-        });
+        })->toArray();
     }
 
     /**
