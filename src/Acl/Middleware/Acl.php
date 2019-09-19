@@ -7,6 +7,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Symfony\Component\HttpFoundation\Response;
 use Sztyup\Acl\AclManager;
 use Sztyup\Acl\Exception\NotAuthorizedException;
 
@@ -27,10 +28,10 @@ class Acl
      * @param Request $request
      * @param Closure $next
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      *
      * @throws NotAuthorizedException
-     * @throws \Illuminate\Auth\AuthenticationException
+     * @throws AuthenticationException
      */
     public function handle(Request $request, Closure $next)
     {
@@ -38,13 +39,13 @@ class Acl
 
         $this->acl->setUser($user);
 
-        list($roles, $permissions) = $this->parseAcl($request);
+        [$roles, $permissions] = $this->parseAcl($request);
 
         $aclAction = count($roles) + count($permissions) > 0;
 
         $authAction = $request->route()->getAction('auth');
 
-        if ($authAction === null && $aclAction == 0) { // Auth is not required
+        if ($authAction === null && $aclAction === 0) { // Auth is not required
             return $next($request);
         }
 
@@ -52,7 +53,7 @@ class Acl
             throw new AuthenticationException();
         }
 
-        if ($aclAction == 0) { // No permission / role required
+        if ($aclAction === 0) { // No permission / role required
             return $next($request);
         }
 
