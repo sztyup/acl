@@ -280,4 +280,9 @@ class AclManager
     {
         return $this->map;
     }
+
+    public function getUser(): ?Authenticatable
+    {
+        return $this->user;
+    }
 }
