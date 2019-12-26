@@ -25,7 +25,7 @@ class TestCase extends Base
         $config->set('acl.role_inheritance', true);
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->refreshApplication();
 
