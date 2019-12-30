@@ -2,7 +2,6 @@
 
 namespace Sztyup\Acl;
 
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
@@ -58,13 +57,9 @@ class AclServiceProvider extends ServiceProvider
     protected function registerBlade()
     {
         $blade = $this->app->make(BladeCompiler::class);
-        $viewFactory = $this->app->make(Factory::class);
-
-        $viewFactory->share('__acl', $this->app->make(AclManager::class));
-
         // role
         $blade->directive('role', function ($expression) {
-            return "<?php if (\$__acl->hasRole({$expression})): ?>";
+            return "<?php if (\$app['acl']->hasRole({$expression})): ?>";
         });
 
         $blade->directive('elserole', function () {
@@ -77,7 +72,7 @@ class AclServiceProvider extends ServiceProvider
 
         // permission
         $blade->directive('permission', function ($expression) {
-            return "<?php if (\$__acl->hasPermission({$expression})): ?>";
+            return "<?php if (\$app['acl']->hasPermission({$expression})): ?>";
         });
 
         $blade->directive('elsepermission', function () {
