@@ -59,7 +59,7 @@ class AclServiceProvider extends ServiceProvider
         $blade = $this->app->make(BladeCompiler::class);
         // role
         $blade->directive('role', function ($expression) {
-            return "<?php if (\$app['acl']->hasRole({$expression})): ?>";
+            return "<?php if (\$__env->getContainer()['acl']->hasRole({$expression})): ?>";
         });
 
         $blade->directive('elserole', function () {
@@ -72,7 +72,7 @@ class AclServiceProvider extends ServiceProvider
 
         // permission
         $blade->directive('permission', function ($expression) {
-            return "<?php if (\$app['acl']->hasPermission({$expression})): ?>";
+            return "<?php if (\$__env->getContainer()['acl']->hasPermission({$expression})): ?>";
         });
 
         $blade->directive('elsepermission', function () {
