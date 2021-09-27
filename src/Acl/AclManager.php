@@ -281,8 +281,12 @@ class AclManager
         return $this->map;
     }
 
-    public function getUser(): ?Authenticatable
+    public function getUser(bool $force = false): ?Authenticatable
     {
+        if ($force && $this->user === null) {
+            throw new AuthenticationException();
+        }
+
         return $this->user;
     }
 }
